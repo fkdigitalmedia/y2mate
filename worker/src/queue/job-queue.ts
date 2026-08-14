@@ -13,18 +13,77 @@ export interface IJobQueue {
 }
 
 /**
- * In-Memory & Database Abstract Job Queue.
- * Uses atomic locking per job entry to prevent multi-worker concurrency race conditions.
+ * Supabase REST & In-Memory Hybrid Job Queue.
+ * Enables zero-delay cross-server job persistence between Vercel Serverless and VPS Worker nodes.
  */
-export class MemoryJobQueue implements IJobQueue {
-  private static instance: MemoryJobQueue;
+export class HybridJobQueue implements IJobQueue {
+  private static instance: HybridJobQueue;
   private jobs = new Map<string, DownloadJob>();
 
-  public static getInstance(): MemoryJobQueue {
-    if (!MemoryJobQueue.instance) {
-      MemoryJobQueue.instance = new MemoryJobQueue();
+  private get supabaseUrl(): string | undefined {
+    return process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+  }
+
+  private get supabaseKey(): string | undefined {
+    return process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
+  }
+
+  public static getInstance(): HybridJobQueue {
+    if (!HybridJobQueue.instance) {
+      HybridJobQueue.instance = new HybridJobQueue();
     }
-    return MemoryJobQueue.instance;
+    return HybridJobQueue.instance;
+  }
+
+  private async supabaseFetch(endpoint: string, options: RequestInit = {}): Promise<any> {
+    if (!this.supabaseUrl || !this.supabaseKey) return null;
+
+    try {
+      const url = `${this.supabaseUrl}/rest/v1${endpoint}`;
+      const headers = {
+        'apikey': this.supabaseKey,
+        'Authorization': `Bearer ${this.supabaseKey}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=representation',
+        ...options.headers,
+      };
+
+      const res = await fetch(url, { ...options, headers });
+      if (!res.ok) return null;
+
+      const data = await res.json().catch(() => null);
+      return data;
+    } catch (err: any) {
+      Logger.warn(`Supabase DB queue fetch error: ${err.message}`);
+      return null;
+    }
+  }
+
+  private mapDbToJob(row: any): DownloadJob {
+    return {
+      id: row.id,
+      mediaId: row.media_id,
+      mediaUrl: row.media_url,
+      platform: row.platform,
+      format: typeof row.format === 'string' ? JSON.parse(row.format) : row.format,
+      status: row.status as JobState,
+      stage: row.stage as JobStage,
+      progress: row.progress || 0,
+      downloadUrl: row.download_url,
+      fileKey: row.file_key,
+      fileSize: row.file_size,
+      mimeType: row.mime_type,
+      errorCode: row.error_code,
+      errorMessage: row.error_message,
+      claimedBy: row.claimed_by,
+      retryCount: row.retry_count || 0,
+      startedAt: row.started_at,
+      completedAt: row.completed_at,
+      failedAt: row.failed_at,
+      expiresAt: row.expires_at,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    };
   }
 
   async createJob(
@@ -51,6 +110,27 @@ export class MemoryJobQueue implements IJobQueue {
     };
 
     this.jobs.set(jobId, job);
+
+    // Sync to Supabase PostgreSQL DB if configured
+    if (this.supabaseUrl && this.supabaseKey) {
+      await this.supabaseFetch('/jobs', {
+        method: 'POST',
+        body: JSON.stringify({
+          id: jobId,
+          media_id: media.id,
+          media_url: media.canonicalUrl,
+          platform: media.platform,
+          format: format,
+          status: 'QUEUED',
+          stage: 'QUEUED',
+          progress: 0,
+          created_at: now,
+          updated_at: now,
+          expires_at: expiresAt,
+        }),
+      });
+    }
+
     Logger.info(`Job created: ${jobId}`, { jobId, stage: 'QUEUED' });
     return job;
   }
@@ -58,15 +138,41 @@ export class MemoryJobQueue implements IJobQueue {
   async claimJob(workerId: string): Promise<DownloadJob | null> {
     const now = Date.now();
 
+    // 1. Try claiming from Supabase DB first if configured
+    if (this.supabaseUrl && this.supabaseKey) {
+      const queuedRows = await this.supabaseFetch('/jobs?status=eq.QUEUED&order=created_at.asc&limit=1');
+      if (Array.isArray(queuedRows) && queuedRows.length > 0) {
+        const dbJob = this.mapDbToJob(queuedRows[0]);
+        
+        const updateRows = await this.supabaseFetch(`/jobs?id=eq.${dbJob.id}`, {
+          method: 'PATCH',
+          body: JSON.stringify({
+            status: 'PROCESSING',
+            stage: 'DOWNLOADING',
+            progress: 10,
+            claimed_by: workerId,
+            started_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          }),
+        });
+
+        if (Array.isArray(updateRows) && updateRows.length > 0) {
+          const claimed = this.mapDbToJob(updateRows[0]);
+          this.jobs.set(claimed.id, claimed);
+          Logger.info(`Worker ${workerId} claimed DB job ${claimed.id}`, { jobId: claimed.id, stage: 'DOWNLOADING' });
+          return claimed;
+        }
+      }
+    }
+
+    // 2. Fallback to local memory claim
     for (const [id, job] of this.jobs.entries()) {
-      // TTL Check
       if (new Date(job.expiresAt).getTime() < now) {
         job.status = 'EXPIRED';
         this.jobs.set(id, job);
         continue;
       }
 
-      // Check QUEUED jobs or stale PROCESSING jobs (heartbeat timeout > 5 mins)
       const isQueued = job.status === 'QUEUED';
       const isStale =
         job.status === 'PROCESSING' &&
@@ -86,7 +192,7 @@ export class MemoryJobQueue implements IJobQueue {
         };
 
         this.jobs.set(id, updatedJob);
-        Logger.info(`Worker ${workerId} claimed job ${id}`, { jobId: id, stage: 'DOWNLOADING' });
+        Logger.info(`Worker ${workerId} claimed memory job ${id}`, { jobId: id, stage: 'DOWNLOADING' });
         return updatedJob;
       }
     }
@@ -95,24 +201,55 @@ export class MemoryJobQueue implements IJobQueue {
   }
 
   async updateJob(jobId: string, updates: Partial<DownloadJob>): Promise<DownloadJob | null> {
-    const job = this.jobs.get(jobId);
-    if (!job) return null;
-
-    if (updates.status && updates.status !== job.status) {
-      JobStateMachine.assertValidTransition(job.status, updates.status);
-    }
+    const nowIso = new Date().toISOString();
+    const existing = this.jobs.get(jobId);
 
     const updatedJob: DownloadJob = {
-      ...job,
+      ...(existing || {}),
       ...updates,
-      updatedAt: new Date().toISOString(),
-    };
+      id: jobId,
+      updatedAt: nowIso,
+    } as DownloadJob;
 
     this.jobs.set(jobId, updatedJob);
+
+    // Sync to Supabase DB
+    if (this.supabaseUrl && this.supabaseKey) {
+      const payload: Record<string, any> = { updated_at: nowIso };
+      if (updates.status) payload.status = updates.status;
+      if (updates.stage) payload.stage = updates.stage;
+      if (updates.progress !== undefined) payload.progress = updates.progress;
+      if (updates.downloadUrl) payload.download_url = updates.downloadUrl;
+      if (updates.fileKey) payload.file_key = updates.fileKey;
+      if (updates.fileSize) payload.file_size = updates.fileSize;
+      if (updates.mimeType) payload.mime_type = updates.mimeType;
+      if (updates.errorCode) payload.error_code = updates.errorCode;
+      if (updates.errorMessage) payload.error_message = updates.errorMessage;
+      if (updates.claimedBy) payload.claimed_by = updates.claimedBy;
+      if (updates.retryCount !== undefined) payload.retry_count = updates.retryCount;
+      if (updates.completedAt) payload.completed_at = updates.completedAt;
+      if (updates.failedAt) payload.failed_at = updates.failedAt;
+
+      await this.supabaseFetch(`/jobs?id=eq.${jobId}`, {
+        method: 'PATCH',
+        body: JSON.stringify(payload),
+      });
+    }
+
     return updatedJob;
   }
 
   async getJob(jobId: string): Promise<DownloadJob | null> {
+    // Check Supabase DB first if configured
+    if (this.supabaseUrl && this.supabaseKey) {
+      const rows = await this.supabaseFetch(`/jobs?id=eq.${jobId}`);
+      if (Array.isArray(rows) && rows.length > 0) {
+        const job = this.mapDbToJob(rows[0]);
+        this.jobs.set(jobId, job);
+        return job;
+      }
+    }
+
     const job = this.jobs.get(jobId);
     if (!job) return null;
 
@@ -139,6 +276,9 @@ export class MemoryJobQueue implements IJobQueue {
   }
 
   async deleteJob(jobId: string): Promise<boolean> {
+    if (this.supabaseUrl && this.supabaseKey) {
+      await this.supabaseFetch(`/jobs?id=eq.${jobId}`, { method: 'DELETE' });
+    }
     return this.jobs.delete(jobId);
   }
 
@@ -149,4 +289,5 @@ export class MemoryJobQueue implements IJobQueue {
   }
 }
 
-export const jobQueue = MemoryJobQueue.getInstance();
+export { HybridJobQueue as MemoryJobQueue };
+export const jobQueue = HybridJobQueue.getInstance();
