@@ -1,0 +1,47 @@
+# Dependencies
+/node_modules
+/.pnpm
+/.yarn
+
+# Next.js Build Output
+/.next/
+/out/
+/build
+
+# Production & Local Environment Files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.production
+
+# TypeScript & Worker Build Output
+/worker/dist
+/worker/temp
+/scratch
+*.tsbuildinfo
+
+# Logs & Diagnostics
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+logs/
+*.log
+
+# Temporary Processing Files
+/tmp
+/downloads
+*.tmp
+
+# Operating System & IDE Files
+.DS_Store
+*.pem
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
