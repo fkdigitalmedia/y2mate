@@ -76,16 +76,21 @@ async function runTests() {
     assert.ok(['QUEUED', 'PROCESSING'].includes(job.status));
     console.log(`✓ Test 8 Passed: Download job created (${job.id}) in active worker pipeline`);
 
-    // Wait for async worker simulation to complete
-    await new Promise((res) => setTimeout(res, 5000));
-    const updatedJob = await downloadJobManager.getJob(job.id);
+    // Wait for async worker processing to complete
+    let updatedJob = null;
+    for (let i = 0; i < 20; i++) {
+      await new Promise((res) => setTimeout(res, 1000));
+      updatedJob = await downloadJobManager.getJob(job.id);
+      if (updatedJob?.status === 'COMPLETED' || updatedJob?.status === 'FAILED') break;
+    }
+
     if (updatedJob?.status !== 'COMPLETED') {
       console.error('Job Error:', updatedJob?.errorMessage || updatedJob?.errorCode);
     }
     assert.strictEqual(updatedJob?.status, 'COMPLETED');
     assert.strictEqual(updatedJob?.progress, 100);
     assert.ok(updatedJob?.downloadUrl);
-    console.log(`✓ Test 9 Passed: Download job transitioned to COMPLETED (100%) with signed URL`);
+    console.log(`✓ Test 9 Passed: Download job transitioned to COMPLETED (100%) with signed URL: ${updatedJob.downloadUrl}`);
   }
 
   // Test 10: Rate Limiting Engine
