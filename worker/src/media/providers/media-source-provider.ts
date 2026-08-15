@@ -92,16 +92,16 @@ export class DefaultMediaSourceProvider implements MediaSourceProvider {
       if (isAudio) {
         args.push('-x', '--audio-format', 'mp3', '-o', targetFilePath, streamUrl);
       } else {
-        // Fetch requested resolution or best MP4 container
-        let qualitySelector = 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best';
+        // Fetch requested resolution or best MP4 container without restrictive codec blocks
+        let qualitySelector = 'bestvideo+bestaudio/best';
         if (format?.quality?.includes('1080')) {
-          qualitySelector = 'bestvideo[height<=1080][ext=mp4]+bestaudio[ext=m4a]/best[height<=1080][ext=mp4]/best';
+          qualitySelector = 'bestvideo[height<=1080]+bestaudio/best[height<=1080]/best';
         } else if (format?.quality?.includes('720')) {
-          qualitySelector = 'bestvideo[height<=720][ext=mp4]+bestaudio[ext=m4a]/best[height<=720][ext=mp4]/best';
+          qualitySelector = 'bestvideo[height<=720]+bestaudio/best[height<=720]/best';
         } else if (format?.quality?.includes('480')) {
-          qualitySelector = 'bestvideo[height<=480][ext=mp4]+bestaudio[ext=m4a]/best[height<=480][ext=mp4]/best';
+          qualitySelector = 'bestvideo[height<=480]+bestaudio/best[height<=480]/best';
         } else if (format?.quality?.includes('360')) {
-          qualitySelector = 'bestvideo[height<=360][ext=mp4]+bestaudio[ext=m4a]/best[height<=360][ext=mp4]/best';
+          qualitySelector = 'bestvideo[height<=360]+bestaudio/best[height<=360]/best';
         }
 
         args.push('-f', qualitySelector, '--merge-output-format', 'mp4', '-o', targetFilePath, streamUrl);
