@@ -39,10 +39,15 @@ export class MediaJobProcessor {
       // Perform streaming download (or synthetic test stream if mock/demo URL)
       if (preparedSource.streamUrl.startsWith('http')) {
         try {
-          await mediaSourceProvider.downloadStream(preparedSource.streamUrl, inputFilePath, (bytes) => {
-            const pct = Math.min(40, 15 + Math.round((bytes / (10 * 1024 * 1024)) * 25));
-            if (onStageUpdate) onStageUpdate('DOWNLOADING', pct);
-          });
+          await mediaSourceProvider.downloadStream(
+            preparedSource.streamUrl,
+            inputFilePath,
+            (bytes) => {
+              const pct = Math.min(40, 15 + Math.round((bytes / (10 * 1024 * 1024)) * 25));
+              if (onStageUpdate) onStageUpdate('DOWNLOADING', pct);
+            },
+            format
+          );
         } catch (downloadErr: any) {
           // Fallback valid binary media container generation if remote URL is restricted or webpage
           Logger.info(`Initializing media stream pipeline for source URL`, { jobId });

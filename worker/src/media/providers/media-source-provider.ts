@@ -1,8 +1,9 @@
 import fs from 'fs';
 import http from 'http';
 import https from 'https';
+import { spawn } from 'child_process';
 import { URL } from 'url';
-import { workerConfig } from '../../config';
+import { workerConfig, resolveYtDlpExecutable } from '../../config';
 import { validateAndSanitizeUrl } from '@/lib/media/validator';
 import { Logger } from '../../utils/logger';
 import { MediaFormat } from '../../types';
@@ -20,7 +21,7 @@ export interface MediaSourceProvider {
   domains: string[];
   analyze(url: string): Promise<any>;
   prepareDownload(url: string, format: MediaFormat): Promise<PreparedMediaSource>;
-  downloadStream(streamUrl: string, targetFilePath: string, onProgress?: (bytesRead: number) => void): Promise<number>;
+  downloadStream(streamUrl: string, targetFilePath: string, onProgress?: (bytesRead: number) => void, format?: MediaFormat): Promise<number>;
 }
 
 export class DefaultMediaSourceProvider implements MediaSourceProvider {
@@ -48,10 +49,88 @@ export class DefaultMediaSourceProvider implements MediaSourceProvider {
   }
 
   /**
-   * Streaming HTTP downloader enforcing content size limits and request timeouts.
-   * Prevents loading full media payload into RAM.
+   * Downloads real media stream using yt-dlp binary (if available on worker host)
+   * or streaming HTTP downloader enforcing size limits and timeouts.
    */
   async downloadStream(
+    streamUrl: string,
+    targetFilePath: string,
+    onProgress?: (bytesRead: number) => void,
+    format?: MediaFormat
+  ): Promise<number> {
+    const ytDlpPath = resolveYtDlpExecutable();
+
+    // If yt-dlp is available on worker host, download the real original upstream stream
+    if (ytDlpPath) {
+      Logger.info(`Executing yt-dlp stream extraction using ${ytDlpPath} for URL`, { ytDlpPath });
+
+      const isAudio = format?.type === 'audio' || format?.extension === 'mp3' || format?.extension === 'm4a';
+      const args: string[] = [
+        '--no-warnings',
+        '--no-playlist',
+        '--no-check-certificates',
+        '--prefer-free-formats',
+      ];
+
+      if (isAudio) {
+        args.push('-x', '--audio-format', 'mp3', '-o', targetFilePath, streamUrl);
+      } else {
+        // Fetch requested resolution or best MP4 container
+        let qualitySelector = 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best';
+        if (format?.quality?.includes('1080')) {
+          qualitySelector = 'bestvideo[height<=1080][ext=mp4]+bestaudio[ext=m4a]/best[height<=1080][ext=mp4]/best';
+        } else if (format?.quality?.includes('720')) {
+          qualitySelector = 'bestvideo[height<=720][ext=mp4]+bestaudio[ext=m4a]/best[height<=720][ext=mp4]/best';
+        } else if (format?.quality?.includes('480')) {
+          qualitySelector = 'bestvideo[height<=480][ext=mp4]+bestaudio[ext=m4a]/best[height<=480][ext=mp4]/best';
+        } else if (format?.quality?.includes('360')) {
+          qualitySelector = 'bestvideo[height<=360][ext=mp4]+bestaudio[ext=m4a]/best[height<=360][ext=mp4]/best';
+        }
+
+        args.push('-f', qualitySelector, '--merge-output-format', 'mp4', '-o', targetFilePath, streamUrl);
+      }
+
+      return new Promise<number>((resolve, reject) => {
+        let child = spawn(ytDlpPath, args, { shell: false, windowsHide: true });
+        let stderr = '';
+
+        child.stdout?.on('data', (d) => {
+          const str = d.toString();
+          const match = str.match(/(\d+(?:\.\d+)?)%/);
+          if (match && onProgress) {
+            const pct = parseFloat(match[1]);
+            onProgress(Math.floor(pct * 100000));
+          }
+        });
+
+        child.stderr?.on('data', (d) => (stderr += d.toString()));
+
+        child.on('close', (code) => {
+          if (code === 0 && fs.existsSync(targetFilePath) && fs.statSync(targetFilePath).size > 1000) {
+            const size = fs.statSync(targetFilePath).size;
+            Logger.info(`yt-dlp stream download successful. Size: ${size} bytes`);
+            return resolve(size);
+          }
+
+          Logger.warn(`yt-dlp execution returned code ${code}. Falling back to HTTP stream: ${stderr.slice(-200)}`);
+          // Fallback to standard HTTP stream
+          this.downloadHttpStream(streamUrl, targetFilePath, onProgress).then(resolve).catch(reject);
+        });
+
+        child.on('error', (err) => {
+          Logger.warn(`yt-dlp spawn error: ${err.message}. Falling back to HTTP stream.`);
+          this.downloadHttpStream(streamUrl, targetFilePath, onProgress).then(resolve).catch(reject);
+        });
+      });
+    }
+
+    return this.downloadHttpStream(streamUrl, targetFilePath, onProgress);
+  }
+
+  /**
+   * Direct streaming HTTP downloader enforcing content size limits and request timeouts.
+   */
+  private async downloadHttpStream(
     streamUrl: string,
     targetFilePath: string,
     onProgress?: (bytesRead: number) => void

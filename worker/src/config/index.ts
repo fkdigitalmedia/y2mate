@@ -83,6 +83,51 @@ export function resolveFFmpegExecutable(): string {
   return '';
 }
 
+export function resolveYtDlpExecutable(): string {
+  const cwd = process.cwd();
+  const home = os.homedir();
+
+  const candidates: (string | undefined)[] = [
+    process.env.YT_DLP_PATH,
+    '/usr/local/bin/yt-dlp',
+    '/usr/bin/yt-dlp',
+    '/snap/bin/yt-dlp',
+    path.join(home, '.local', 'bin', 'yt-dlp'),
+    path.join(cwd, 'bin', 'yt-dlp'),
+    path.join(cwd, 'bin', 'yt-dlp.exe'),
+    path.join(cwd, 'yt-dlp.exe'),
+    path.join(home, 'AppData', 'Local', 'Microsoft', 'WinGet', 'Links', 'yt-dlp.exe'),
+    path.join(home, 'AppData', 'Local', 'Programs', 'yt-dlp', 'yt-dlp.exe'),
+  ];
+
+  // Check system PATH via where.exe (Windows) or which (Linux/macOS)
+  try {
+    const cmd = process.platform === 'win32' ? 'where.exe' : 'which';
+    const whichRes = spawnSync(cmd, ['yt-dlp'], { windowsHide: true });
+    if (whichRes.status === 0 && whichRes.stdout) {
+      const foundPath = whichRes.stdout.toString().split(/\r?\n/)[0]?.trim();
+      if (foundPath && fs.existsSync(foundPath)) {
+        candidates.unshift(foundPath);
+      }
+    }
+  } catch {}
+
+  for (const candidate of candidates) {
+    if (candidate && typeof candidate === 'string' && candidate.trim().length > 0 && fs.existsSync(candidate)) {
+      return candidate;
+    }
+  }
+
+  try {
+    const testRes = spawnSync('yt-dlp', ['--version'], { windowsHide: true });
+    if (testRes.status === 0) {
+      return 'yt-dlp';
+    }
+  } catch {}
+
+  return '';
+}
+
 export function loadWorkerConfig(): WorkerConfig {
   const workerId = process.env.WORKER_ID || `worker_${os.hostname()}_${process.pid}_${Math.random().toString(36).substring(2, 7)}`;
   
