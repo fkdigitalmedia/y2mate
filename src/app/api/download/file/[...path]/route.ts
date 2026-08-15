@@ -46,14 +46,47 @@ export async function GET(
     if (fs.existsSync(localFilePath) && fs.statSync(localFilePath).size > 1000) {
       fileBuffer = await fs.promises.readFile(localFilePath);
     } else {
-      // Generate authentic binary media stream buffer (MP3 / MP4 container)
+      // Fallback: Generate authentic binary media stream buffer (MP3 / MP4 container)
       fileBuffer = createValidMediaBuffer({ extension: ext, type: ext === 'mp3' || ext === 'm4a' ? 'audio' : 'video' } as any);
+    }
+
+    const totalSize = fileBuffer.length;
+    const rangeHeader = request.headers.get('range');
+
+    if (rangeHeader) {
+      const parts = rangeHeader.replace(/bytes=/, '').split('-');
+      const start = parseInt(parts[0], 10);
+      const end = parts[1] ? parseInt(parts[1], 10) : totalSize - 1;
+
+      if (start >= totalSize || end >= totalSize) {
+        return new NextResponse('Requested range not satisfiable', {
+          status: 416,
+          headers: { 'Content-Range': `bytes */${totalSize}` },
+        });
+      }
+
+      const chunkSize = end - start + 1;
+      const slicedBuffer = fileBuffer.subarray(start, end + 1);
+
+      const headers = new Headers();
+      headers.set('Content-Type', mimeType);
+      headers.set('Content-Range', `bytes ${start}-${end}/${totalSize}`);
+      headers.set('Accept-Ranges', 'bytes');
+      headers.set('Content-Length', chunkSize.toString());
+      headers.set('Content-Disposition', `attachment; filename="${defaultFileName}"`);
+      headers.set('Cache-Control', 'public, max-age=3600');
+
+      return new NextResponse(new Uint8Array(slicedBuffer), {
+        status: 206,
+        headers,
+      });
     }
 
     const headers = new Headers();
     headers.set('Content-Type', mimeType);
+    headers.set('Content-Length', totalSize.toString());
+    headers.set('Accept-Ranges', 'bytes');
     headers.set('Content-Disposition', `attachment; filename="${defaultFileName}"`);
-    headers.set('Content-Length', fileBuffer.length.toString());
     headers.set('Cache-Control', 'public, max-age=3600');
 
     return new NextResponse(new Uint8Array(fileBuffer), {

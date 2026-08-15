@@ -89,6 +89,29 @@ export class MediaJobProcessor {
       const finalPath = fs.existsSync(outputFilePath) ? outputFilePath : inputFilePath;
       const outputStat = await fs.promises.stat(finalPath);
 
+      // Mandatory Media Container Validation (Header & Minimum Size Verification)
+      if (outputStat.size < 10000) {
+        return {
+          success: false,
+          errorCode: 'OUTPUT_TOO_SMALL',
+          error: `Processed media output file size (${outputStat.size} bytes) is below minimum valid threshold.`,
+        };
+      }
+
+      const headBuffer = Buffer.alloc(100);
+      const fd = await fs.promises.open(finalPath, 'r');
+      await fd.read(headBuffer, 0, 100, 0);
+      await fd.close();
+
+      const headStr = headBuffer.toString('utf-8', 0, 50).toLowerCase();
+      if (headStr.includes('<!doctype') || headStr.includes('<html') || headStr.includes('{"error"')) {
+        return {
+          success: false,
+          errorCode: 'INVALID_MEDIA_CONTAINER',
+          error: 'Processed output file contains HTML/JSON error text instead of valid audio/video bytes.',
+        };
+      }
+
       // Output file size verification
       if (outputStat.size > workerConfig.maxOutputFileSizeMb * 1024 * 1024) {
         return {

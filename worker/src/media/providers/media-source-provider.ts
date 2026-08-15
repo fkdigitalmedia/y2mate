@@ -74,6 +74,12 @@ export class DefaultMediaSourceProvider implements MediaSourceProvider {
           return reject(new Error(`NETWORK_ERROR: HTTP ${res.statusCode} downloading media source.`));
         }
 
+        const contentType = res.headers['content-type'] || '';
+        if (contentType.includes('text/html') || contentType.includes('application/json')) {
+          req.destroy();
+          return reject(new Error(`INVALID_MEDIA_TYPE: Remote URL returned HTML/JSON page (${contentType}) instead of media stream.`));
+        }
+
         const contentLength = parseInt(res.headers['content-length'] || '0', 10);
         if (contentLength > maxBytes) {
           req.destroy();
@@ -102,7 +108,15 @@ export class DefaultMediaSourceProvider implements MediaSourceProvider {
         res.pipe(fileStream);
 
         fileStream.on('finish', () => {
-          fileStream.close(() => resolve(bytesDownloaded));
+          fileStream.close(() => {
+            if (contentLength > 0 && bytesDownloaded < contentLength * 0.95) {
+              try {
+                if (fs.existsSync(targetFilePath)) fs.unlinkSync(targetFilePath);
+              } catch {}
+              return reject(new Error(`STREAM_TRUNCATED: Received ${bytesDownloaded} bytes out of expected ${contentLength} bytes.`));
+            }
+            resolve(bytesDownloaded);
+          });
         });
 
         fileStream.on('error', (err) => {
