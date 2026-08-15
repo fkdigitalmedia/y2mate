@@ -148,7 +148,7 @@ export class HybridJobQueue implements IJobQueue {
       }).catch((err) => Logger.warn(`Failed to sync createJob to Supabase: ${err.message}`));
     }
 
-    Logger.info(`Job created: ${jobId}`, { jobId, stage: 'QUEUED' });
+    Logger.info(`JOB_CREATED id=${jobId} status=QUEUED created_at=${now} expires_at=${expiresAt}`, { jobId, stage: 'QUEUED' });
     return job;
   }
 
@@ -256,7 +256,16 @@ export class HybridJobQueue implements IJobQueue {
     return updatedJob;
   }
 
+  private isJobExpired(job: DownloadJob): boolean {
+    if (!job || !job.expiresAt) return false;
+    const expTime = new Date(job.expiresAt).getTime();
+    if (isNaN(expTime) || expTime === 0) return false;
+    return expTime < Date.now();
+  }
+
   async getJob(jobId: string): Promise<DownloadJob | null> {
+    Logger.info(`JOB_STATUS_REQUEST id=${jobId}`);
+
     // 1. Check local in-memory Map FIRST
     let job = this.jobs.get(jobId);
 
@@ -269,13 +278,18 @@ export class HybridJobQueue implements IJobQueue {
       }
     }
 
-    if (!job) return null;
-
-    if (new Date(job.expiresAt).getTime() < Date.now() && job.status !== 'EXPIRED') {
-      job.status = 'EXPIRED';
-      this.jobs.set(jobId, job);
+    if (!job) {
+      Logger.warn(`JOB_NOT_FOUND id=${jobId}`);
+      return null;
     }
 
+    if (this.isJobExpired(job) && job.status !== 'EXPIRED') {
+      job.status = 'EXPIRED';
+      this.jobs.set(jobId, job);
+      Logger.warn(`JOB_EXPIRED id=${jobId} expiresAt=${job.expiresAt}`);
+    }
+
+    Logger.info(`JOB_FOUND id=${jobId} status=${job.status} stage=${job.stage} progress=${job.progress}`);
     return job;
   }
 
