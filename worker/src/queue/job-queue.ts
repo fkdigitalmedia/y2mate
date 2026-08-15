@@ -297,10 +297,10 @@ export class HybridJobQueue implements IJobQueue {
       if (updates.completedAt) payload.completed_at = updates.completedAt;
       if (updates.failedAt) payload.failed_at = updates.failedAt;
 
-      await this.supabaseFetch(`/jobs?id=eq.${jobId}`, {
+      this.supabaseFetch(`/jobs?id=eq.${jobId}`, {
         method: 'PATCH',
         body: JSON.stringify(payload),
-      });
+      }).catch((err) => Logger.warn(`Failed to sync updateJob to Supabase: ${err.message}`));
     }
 
     return updatedJob;
