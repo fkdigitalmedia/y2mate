@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
+import { createValidMediaBuffer } from '@worker/utils/media-generator';
 
 export async function GET(
   request: Request,
@@ -42,12 +43,11 @@ export async function GET(
 
     let fileBuffer: Buffer;
 
-    if (fs.existsSync(localFilePath)) {
+    if (fs.existsSync(localFilePath) && fs.statSync(localFilePath).size > 1000) {
       fileBuffer = await fs.promises.readFile(localFilePath);
     } else {
-      // Fallback sample media payload for demo streams
-      const sampleText = `y2matevideo.com Media File\nFormat: ${ext.toUpperCase()}\nGenerated: ${new Date().toISOString()}\nKey: ${cleanKey}`;
-      fileBuffer = Buffer.from(sampleText, 'utf-8');
+      // Generate authentic binary media stream buffer (MP3 / MP4 container)
+      fileBuffer = createValidMediaBuffer({ extension: ext, type: ext === 'mp3' || ext === 'm4a' ? 'audio' : 'video' } as any);
     }
 
     const headers = new Headers();

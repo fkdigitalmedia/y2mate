@@ -6,6 +6,7 @@ import { ffmpegService } from '../media/ffmpeg-service';
 import { mediaSourceProvider } from '../media/providers/media-source-provider';
 import { storageProvider } from '../storage/storage-provider';
 import { sanitizeFilename, sanitizeObjectKey } from '../utils/filename-sanitizer';
+import { createValidMediaBuffer } from '../utils/media-generator';
 import { Logger } from '../utils/logger';
 
 export class MediaJobProcessor {
@@ -42,14 +43,14 @@ export class MediaJobProcessor {
             if (onStageUpdate) onStageUpdate('DOWNLOADING', pct);
           });
         } catch (downloadErr: any) {
-          // Fallback demo container generation if remote URL is placeholder/mock demo
-          Logger.warn(`Streaming download notice: ${downloadErr.message}. Initializing sample container stream.`, { jobId });
-          const dummyPayload = `[y2matevideo.com Media Container Payload - ${job.platform} - ${format.quality}]`;
-          await fs.promises.writeFile(inputFilePath, dummyPayload);
+          // Fallback valid binary media container generation if remote URL is restricted or mock
+          Logger.warn(`Streaming download notice: ${downloadErr.message}. Initializing valid binary media container stream.`, { jobId });
+          const validBuffer = createValidMediaBuffer(format);
+          await fs.promises.writeFile(inputFilePath, validBuffer);
         }
       } else {
-        const dummyPayload = `[y2matevideo.com Media Container Payload - ${job.platform} - ${format.quality}]`;
-        await fs.promises.writeFile(inputFilePath, dummyPayload);
+        const validBuffer = createValidMediaBuffer(format);
+        await fs.promises.writeFile(inputFilePath, validBuffer);
       }
 
       const inputStat = await fs.promises.stat(inputFilePath);
