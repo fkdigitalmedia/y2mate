@@ -3,7 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import os from 'os';
 import { MediaFormat } from '../types';
-import { workerConfig } from '../config';
+import { workerConfig, resolveFFmpegExecutable } from '../config';
 
 /**
  * Parses target size string (e.g. "~54.2 MB", "~10.2 MB", "28.4MB") to exact byte length.
@@ -35,7 +35,7 @@ function parseFormatSizeBytes(format: MediaFormat): number {
  */
 export function createValidMediaBuffer(format: MediaFormat): Buffer {
   const ext = (format.extension || 'mp4').toLowerCase();
-  const execPath = workerConfig.ffmpegPath || 'ffmpeg';
+  const execPath = resolveFFmpegExecutable();
   const tmpFile = path.join(os.tmpdir(), `gen_playable_${Date.now()}_${Math.random().toString(36).substring(2, 7)}.${ext}`);
 
   try {

@@ -3,7 +3,7 @@ import path from 'path';
 import os from 'os';
 import crypto from 'crypto';
 import { spawn } from 'child_process';
-import { workerConfig } from '../config';
+import { workerConfig, resolveFFmpegExecutable } from '../config';
 import { Logger } from '../utils/logger';
 
 export interface MediaInfo {
@@ -98,7 +98,7 @@ export class MediaValidatorService {
   }
 
   private async runFFmpegInspect(filePath: string): Promise<MediaInfo> {
-    const ffmpegPath = workerConfig.ffmpegPath || 'ffmpeg';
+    const ffmpegPath = resolveFFmpegExecutable();
     return new Promise((resolve) => {
       let stderr = '';
       try {
@@ -215,7 +215,7 @@ export class MediaValidatorService {
   }
 
   private async runFFmpegDecodeCheck(filePath: string): Promise<{ isValid: boolean; error?: string }> {
-    const ffmpegPath = workerConfig.ffmpegPath || 'ffmpeg';
+    const ffmpegPath = resolveFFmpegExecutable();
     return new Promise((resolve) => {
       let stderr = '';
       try {

@@ -22,14 +22,21 @@ export interface WorkerConfig {
   databaseUrl?: string;
 }
 
-function resolveFFmpegExecutable(): string {
+export function resolveFFmpegExecutable(): string {
+  const cwd = process.cwd();
+  const home = os.homedir();
+
   const candidates: (string | undefined)[] = [
     process.env.FFMPEG_PATH,
-    path.join(process.cwd(), 'node_modules', 'ffmpeg-static', 'ffmpeg.exe'),
-    path.join(process.cwd(), 'node_modules', 'ffmpeg-static', 'ffmpeg'),
-    path.join(os.homedir(), 'AppData', 'Local', 'Microsoft', 'WinGet', 'Links', 'ffmpeg.exe'),
-    path.join(os.homedir(), 'AppData', 'Local', 'Microsoft', 'WinGet', 'Packages', 'Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe', 'ffmpeg-9.0-full_build', 'bin', 'ffmpeg.exe'),
+    path.join(cwd, 'node_modules', 'ffmpeg-static', 'ffmpeg.exe'),
+    path.join(cwd, 'node_modules', 'ffmpeg-static', 'ffmpeg'),
+    path.join(cwd, '..', 'node_modules', 'ffmpeg-static', 'ffmpeg.exe'),
+    path.join(home, 'AppData', 'Local', 'Microsoft', 'WinGet', 'Packages', 'Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe', 'ffmpeg-9.0-full_build', 'bin', 'ffmpeg.exe'),
+    path.join(home, 'AppData', 'Local', 'Microsoft', 'WinGet', 'Links', 'ffmpeg.exe'),
     'C:\\Users\\Fkdigitalmedia\\AppData\\Local\\CapCut\\Apps\\7.8.8.3267\\ffmpeg.exe',
+    'C:\\Users\\Fkdigitalmedia\\AppData\\Local\\CapCut\\Apps\\7.7.0.3143\\ffmpeg.exe',
+    'C:\\Program Files\\FFmpeg\\bin\\ffmpeg.exe',
+    'C:\\ffmpeg\\bin\\ffmpeg.exe',
   ];
 
   try {

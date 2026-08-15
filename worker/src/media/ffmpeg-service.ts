@@ -1,7 +1,7 @@
 import { spawn, ChildProcess } from 'child_process';
 import fs from 'fs';
 import path from 'path';
-import { workerConfig } from '../config';
+import { workerConfig, resolveFFmpegExecutable } from '../config';
 import { MediaFormat } from '../types';
 import { Logger } from '../utils/logger';
 
@@ -66,7 +66,9 @@ export class FFmpegService {
       throw new Error(`FFmpeg input file not found: ${inputPath}`);
     }
 
-    const execPath = this.ffmpegPath || workerConfig.ffmpegPath || 'ffmpeg';
+    const execPath = (this.ffmpegPath && this.ffmpegPath !== 'ffmpeg' && fs.existsSync(this.ffmpegPath))
+      ? this.ffmpegPath
+      : resolveFFmpegExecutable();
     const args = this.buildFFmpegArgs(options);
     const timeoutMs = (timeoutSeconds || workerConfig.processingTimeoutSeconds) * 1000;
 
