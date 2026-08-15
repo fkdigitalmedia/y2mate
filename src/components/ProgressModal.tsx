@@ -72,8 +72,13 @@ export default function ProgressModal({
             clearInterval(pollInterval);
           }
         } else if (!json.success && isSubscribed) {
-          setErrorMessage(json.error?.message || 'Job session expired.');
-          clearInterval(pollInterval);
+          if (json.error?.code === 'JOB_EXPIRED') {
+            clearInterval(pollInterval);
+            initJob();
+          } else {
+            setErrorMessage(json.error?.message || 'Job session expired.');
+            clearInterval(pollInterval);
+          }
         }
       } catch (err) {
         // Continue polling on transient network fetch error
