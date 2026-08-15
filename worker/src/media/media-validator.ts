@@ -166,6 +166,16 @@ export class MediaValidatorService {
       if (ftypIdx === -1 || ftypIdx > 30) {
         return { isValid: false, fileSize: stat.size, error: 'Invalid MP4/M4A video container header (missing ISO ftyp atom).' };
       }
+
+      const fullHeader = Buffer.alloc(512);
+      const fdFull = await fs.promises.open(filePath, 'r');
+      await fdFull.read(fullHeader, 0, 512, 0);
+      await fdFull.close();
+
+      if (fullHeader.indexOf('moov') === -1) {
+        return { isValid: false, fileSize: stat.size, error: 'Invalid MP4 video container: missing ISO moov metadata index atom.' };
+      }
+
       return { isValid: true, fileSize: stat.size, formatName: 'mp4', duration: 180, hasVideo: ext === 'mp4', hasAudio: true, videoCodec: 'h264', audioCodec: 'aac' };
     }
 
