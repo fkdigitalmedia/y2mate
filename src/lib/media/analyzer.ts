@@ -9,7 +9,13 @@ import { MediaEngineError } from './errors';
 import { settingsService } from '@/lib/settings/settings-service';
 
 // Recent media analysis cache for server-side formatId verification
-const mediaCache = new Map<string, MediaResult>();
+const globalForMediaCache = globalThis as unknown as {
+  __mediaCache?: Map<string, MediaResult>;
+};
+if (!globalForMediaCache.__mediaCache) {
+  globalForMediaCache.__mediaCache = new Map<string, MediaResult>();
+}
+const mediaCache = globalForMediaCache.__mediaCache;
 
 export class MediaAnalyzerService {
   private static instance: MediaAnalyzerService;
