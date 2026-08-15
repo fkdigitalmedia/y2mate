@@ -11,7 +11,8 @@ export interface MediaFormat {
   quality: string; // e.g. "1080p", "720p", "320 kbps"
   resolution?: string; // e.g. "1920x1080"
   bitrate?: string; // e.g. "320 kbps"
-  fileSize?: string; // e.g. "~42.5 MB" or undefined if unknown
+  fileSize?: string; // e.g. "Estimated size: ~42.5 MB" or "Size unavailable"
+  fileSizeType?: 'actual' | 'estimated' | 'unknown';
   mimeType: string;
   downloadable: boolean;
   requiresProcessing: boolean;

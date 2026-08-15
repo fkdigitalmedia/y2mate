@@ -17,13 +17,7 @@ function parseFormatSizeBytes(format: MediaFormat): number {
 
   const ext = (format.extension || 'mp4').toLowerCase();
   if (ext === 'mp3') {
-    return Math.floor(10.2 * 1024 * 1024);
-  }
-  if (format.resolution?.includes('1080')) {
-    return Math.floor(54.2 * 1024 * 1024);
-  }
-  if (format.resolution?.includes('720')) {
-    return Math.floor(28.4 * 1024 * 1024);
+    return Math.floor(8.5 * 1024 * 1024);
   }
 
   return Math.floor(15.0 * 1024 * 1024);
