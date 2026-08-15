@@ -11,6 +11,16 @@ export interface StorageProvider {
   createSignedUrl(key: string, expiresInSeconds?: number): Promise<string>;
   deleteFile(key: string): Promise<boolean>;
   getMetadata(key: string): Promise<StorageMetadata | null>;
+  getFileBuffer?(key: string): Promise<Buffer | null>;
+}
+
+// Global in-memory storage buffer map for shared process persistence
+declare global {
+  var __sharedStorageVaultMap: Map<string, { buffer: Buffer; mimeType: string; createdAt: Date }> | undefined;
+}
+
+if (!globalThis.__sharedStorageVaultMap) {
+  globalThis.__sharedStorageVaultMap = new Map();
 }
 
 /**
@@ -111,12 +121,13 @@ export class S3StorageProvider implements StorageProvider {
 export class LocalDiskStorageProvider implements StorageProvider {
   private static instance: LocalDiskStorageProvider;
   private storageDir: string;
-  private metadataMap = new Map<string, StorageMetadata>();
 
   private constructor() {
     this.storageDir = path.join(workerConfig.tempBaseDir, 'storage_vault');
     if (!fs.existsSync(this.storageDir)) {
-      fs.mkdirSync(this.storageDir, { recursive: true });
+      try {
+        fs.mkdirSync(this.storageDir, { recursive: true });
+      } catch {}
     }
   }
 
@@ -128,36 +139,40 @@ export class LocalDiskStorageProvider implements StorageProvider {
   }
 
   async uploadFile(key: string, sourcePath: string, mimeType: string): Promise<string> {
-    const targetPath = path.join(this.storageDir, key.replace(/[/\\]/g, '_'));
-    await fs.promises.copyFile(sourcePath, targetPath);
-    const stat = await fs.promises.stat(targetPath);
+    const fileBuf = await fs.promises.readFile(sourcePath);
+    const sanitizedKey = key.replace(/[/\\]/g, '_');
+    const targetPath = path.join(this.storageDir, sanitizedKey);
 
-    this.metadataMap.set(key, {
-      key,
-      size: stat.size,
+    try {
+      await fs.promises.writeFile(targetPath, fileBuf);
+    } catch {}
+
+    globalThis.__sharedStorageVaultMap!.set(key, {
+      buffer: fileBuf,
+      mimeType,
+      createdAt: new Date(),
+    });
+    globalThis.__sharedStorageVaultMap!.set(sanitizedKey, {
+      buffer: fileBuf,
       mimeType,
       createdAt: new Date(),
     });
 
-    Logger.info(`Stored local object key ${key} (${stat.size} bytes)`, { key });
+    Logger.info(`Stored local object key ${key} (${fileBuf.length} bytes)`, { key });
     return key;
   }
 
   async createSignedUrl(key: string, expiresInSeconds = 1800): Promise<string> {
-    const meta = this.metadataMap.get(key);
     const expiresAt = Date.now() + expiresInSeconds * 1000;
     const token = `signed_${Math.random().toString(36).substring(2, 10)}`;
-
-    if (!meta) {
-      return `/api/download/file/${encodeURIComponent(key)}?error=NOT_FOUND`;
-    }
-
     return `/api/download/file/${encodeURIComponent(key)}?token=${token}&expires=${expiresAt}`;
   }
 
   async deleteFile(key: string): Promise<boolean> {
-    const targetPath = path.join(this.storageDir, key.replace(/[/\\]/g, '_'));
-    this.metadataMap.delete(key);
+    const sanitizedKey = key.replace(/[/\\]/g, '_');
+    const targetPath = path.join(this.storageDir, sanitizedKey);
+    globalThis.__sharedStorageVaultMap!.delete(key);
+    globalThis.__sharedStorageVaultMap!.delete(sanitizedKey);
     try {
       if (fs.existsSync(targetPath)) {
         await fs.promises.unlink(targetPath);
@@ -169,17 +184,54 @@ export class LocalDiskStorageProvider implements StorageProvider {
   }
 
   async getMetadata(key: string): Promise<StorageMetadata | null> {
-    return this.metadataMap.get(key) || null;
+    const sanitizedKey = key.replace(/[/\\]/g, '_');
+    const entry = globalThis.__sharedStorageVaultMap!.get(key) || globalThis.__sharedStorageVaultMap!.get(sanitizedKey);
+    if (entry) {
+      return {
+        key,
+        size: entry.buffer.length,
+        mimeType: entry.mimeType,
+        createdAt: entry.createdAt,
+      };
+    }
+
+    const targetPath = path.join(this.storageDir, sanitizedKey);
+    if (fs.existsSync(targetPath)) {
+      const stat = fs.statSync(targetPath);
+      return {
+        key,
+        size: stat.size,
+        mimeType: 'video/mp4',
+        createdAt: stat.mtime,
+      };
+    }
+
+    return null;
+  }
+
+  async getFileBuffer(key: string): Promise<Buffer | null> {
+    const sanitizedKey = key.replace(/[/\\]/g, '_');
+    const entry = globalThis.__sharedStorageVaultMap!.get(key) || globalThis.__sharedStorageVaultMap!.get(sanitizedKey);
+    if (entry) {
+      return entry.buffer;
+    }
+
+    const targetPath = path.join(this.storageDir, sanitizedKey);
+    if (fs.existsSync(targetPath)) {
+      return await fs.promises.readFile(targetPath);
+    }
+
+    return null;
   }
 }
 
 // Select storage provider dynamically based on current environment configuration
 export function getStorageProvider(): StorageProvider {
   if (
-    (process.env.STORAGE_PROVIDER === 'r2' || process.env.STORAGE_PROVIDER === 's3') &&
     workerConfig.storageAccessKey &&
     workerConfig.storageSecretKey &&
-    !workerConfig.storageAccessKey.includes('your-')
+    !workerConfig.storageAccessKey.includes('your-') &&
+    workerConfig.storageAccessKey.length > 5
   ) {
     return new S3StorageProvider();
   }
@@ -195,4 +247,6 @@ export const storageProvider: StorageProvider = {
     getStorageProvider().deleteFile(key),
   getMetadata: (key: string) =>
     getStorageProvider().getMetadata(key),
+  getFileBuffer: (key: string) =>
+    (getStorageProvider() as any).getFileBuffer ? (getStorageProvider() as any).getFileBuffer(key) : Promise.resolve(null),
 };

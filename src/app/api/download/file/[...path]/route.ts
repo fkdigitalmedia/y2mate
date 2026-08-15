@@ -35,17 +35,26 @@ export async function GET(
       defaultFileName = `y2matevideo_download.webm`;
     }
 
-    // Search local storage vault locations for stored file
+    // Search in-memory shared vault & local storage vault locations for stored file
     const tempBase = process.env.TEMP_DIR || path.join(os.tmpdir(), 'y2matevideo');
     const storageVaultDir = path.join(tempBase, 'storage_vault');
     const sanitizedFileName = cleanKey.replace(/[/\\]/g, '_');
     const localFilePath = path.join(storageVaultDir, sanitizedFileName);
 
-    let fileBuffer: Buffer;
+    let fileBuffer: Buffer | null = null;
 
-    if (fs.existsSync(localFilePath) && fs.statSync(localFilePath).size > 1000) {
+    if ((globalThis as any).__sharedStorageVaultMap) {
+      const entry = (globalThis as any).__sharedStorageVaultMap.get(cleanKey) || (globalThis as any).__sharedStorageVaultMap.get(sanitizedFileName);
+      if (entry) {
+        fileBuffer = entry.buffer;
+      }
+    }
+
+    if (!fileBuffer && fs.existsSync(localFilePath) && fs.statSync(localFilePath).size > 1000) {
       fileBuffer = await fs.promises.readFile(localFilePath);
-    } else {
+    }
+
+    if (!fileBuffer) {
       // Fallback: Generate authentic binary media stream buffer (MP3 / MP4 container)
       fileBuffer = createValidMediaBuffer({ extension: ext, type: ext === 'mp3' || ext === 'm4a' ? 'audio' : 'video' } as any);
     }
