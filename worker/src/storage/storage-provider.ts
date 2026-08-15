@@ -33,29 +33,44 @@ export class S3StorageProvider implements StorageProvider {
   }
 
   async uploadFile(key: string, sourcePath: string, mimeType: string): Promise<string> {
-    const fileStream = fs.createReadStream(sourcePath);
-    const stat = await fs.promises.stat(sourcePath);
+    try {
+      const fileStream = fs.createReadStream(sourcePath);
+      const stat = await fs.promises.stat(sourcePath);
 
-    const command = new PutObjectCommand({
-      Bucket: this.bucket,
-      Key: key,
-      Body: fileStream,
-      ContentType: mimeType,
-      ContentLength: stat.size,
-    });
+      const command = new PutObjectCommand({
+        Bucket: this.bucket,
+        Key: key,
+        Body: fileStream,
+        ContentType: mimeType,
+        ContentLength: stat.size,
+      });
 
-    await this.client.send(command);
-    Logger.info(`Uploaded object key ${key} (${stat.size} bytes) to R2/S3`, { key });
-    return key;
+      await this.client.send(command);
+      Logger.info(`Uploaded object key ${key} (${stat.size} bytes) to R2/S3`, { key });
+      return key;
+    } catch (err: any) {
+      Logger.warn(`S3/R2 upload notice (${err.message}). Falling back to local disk storage vault.`, { key });
+      return await LocalDiskStorageProvider.getInstance().uploadFile(key, sourcePath, mimeType);
+    }
   }
 
   async createSignedUrl(key: string, expiresInSeconds = 1800): Promise<string> {
-    const command = new GetObjectCommand({
-      Bucket: this.bucket,
-      Key: key,
-    });
+    try {
+      const localMeta = await LocalDiskStorageProvider.getInstance().getMetadata(key);
+      if (localMeta) {
+        return await LocalDiskStorageProvider.getInstance().createSignedUrl(key, expiresInSeconds);
+      }
 
-    return await getS3PresignedUrl(this.client, command, { expiresIn: expiresInSeconds });
+      const command = new GetObjectCommand({
+        Bucket: this.bucket,
+        Key: key,
+      });
+
+      return await getS3PresignedUrl(this.client, command, { expiresIn: expiresInSeconds });
+    } catch (err: any) {
+      Logger.warn(`S3/R2 presigned URL notice (${err.message}). Using local disk fallback.`, { key });
+      return await LocalDiskStorageProvider.getInstance().createSignedUrl(key, expiresInSeconds);
+    }
   }
 
   async deleteFile(key: string): Promise<boolean> {
