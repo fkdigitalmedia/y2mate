@@ -32,9 +32,12 @@ export function resolveFFmpegExecutable(): string {
     path.join(cwd, 'node_modules', 'ffmpeg-static', 'ffmpeg'),
     path.join(cwd, '..', 'node_modules', 'ffmpeg-static', 'ffmpeg.exe'),
     path.join(cwd, '..', 'node_modules', 'ffmpeg-static', 'ffmpeg'),
+    path.join(cwd, '.next', 'server', 'node_modules', 'ffmpeg-static', 'ffmpeg.exe'),
+    path.join(cwd, '.next', 'server', 'node_modules', 'ffmpeg-static', 'ffmpeg'),
     '/usr/bin/ffmpeg',
     '/usr/local/bin/ffmpeg',
     '/snap/bin/ffmpeg',
+    '/opt/homebrew/bin/ffmpeg',
     path.join(home, 'AppData', 'Local', 'Microsoft', 'WinGet', 'Packages', 'Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe', 'ffmpeg-9.0-full_build', 'bin', 'ffmpeg.exe'),
     path.join(home, 'AppData', 'Local', 'Microsoft', 'WinGet', 'Links', 'ffmpeg.exe'),
     'C:\\Users\\Fkdigitalmedia\\AppData\\Local\\CapCut\\Apps\\7.8.8.3267\\ffmpeg.exe',
@@ -50,13 +53,33 @@ export function resolveFFmpegExecutable(): string {
     }
   } catch {}
 
+  // Check system PATH via where.exe (Windows) or which (Linux/macOS)
+  try {
+    const cmd = process.platform === 'win32' ? 'where.exe' : 'which';
+    const whichRes = spawnSync(cmd, ['ffmpeg'], { windowsHide: true });
+    if (whichRes.status === 0 && whichRes.stdout) {
+      const foundPath = whichRes.stdout.toString().split(/\r?\n/)[0]?.trim();
+      if (foundPath && fs.existsSync(foundPath)) {
+        candidates.unshift(foundPath);
+      }
+    }
+  } catch {}
+
   for (const candidate of candidates) {
-    if (candidate && typeof candidate === 'string' && fs.existsSync(candidate)) {
+    if (candidate && typeof candidate === 'string' && candidate.trim().length > 0 && fs.existsSync(candidate)) {
       return candidate;
     }
   }
 
-  return 'ffmpeg';
+  // Verify if raw 'ffmpeg' command executes in system PATH
+  try {
+    const testRes = spawnSync('ffmpeg', ['-version'], { windowsHide: true });
+    if (testRes.status === 0) {
+      return 'ffmpeg';
+    }
+  } catch {}
+
+  return '';
 }
 
 export function loadWorkerConfig(): WorkerConfig {

@@ -69,6 +69,12 @@ export class FFmpegService {
     const execPath = (this.ffmpegPath && this.ffmpegPath !== 'ffmpeg' && fs.existsSync(this.ffmpegPath))
       ? this.ffmpegPath
       : resolveFFmpegExecutable();
+
+    if (!execPath) {
+      Logger.error(`FFMPEG_SPAWN_FAILED error=FFmpeg binary missing on worker host`);
+      throw new Error(`FFMPEG_UNAVAILABLE: FFmpeg executable is not installed or accessible on this worker host.`);
+    }
+
     const args = this.buildFFmpegArgs(options);
     const timeoutMs = (timeoutSeconds || workerConfig.processingTimeoutSeconds) * 1000;
 
