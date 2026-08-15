@@ -120,6 +120,14 @@ export class MediaValidatorService {
 
             const duration = parseFloat(format.duration || '0');
 
+            if (!streams || streams.length === 0) {
+              return resolve({
+                isValid: false,
+                fileSize: parseInt(format.size || '0', 10),
+                error: 'MEDIA_OUTPUT_INVALID: Output file contains zero media streams (nb_streams = 0).',
+              });
+            }
+
             resolve({
               isValid: (hasVideo || hasAudio) && (duration > 0 || streams.length > 0),
               formatName: format.format_name,
@@ -192,13 +200,17 @@ export class MediaValidatorService {
         return { isValid: false, fileSize: stat.size, error: 'Invalid MP4/M4A video container header (missing ISO ftyp atom).' };
       }
 
-      const fullHeader = Buffer.alloc(512);
+      const fullHeader = Buffer.alloc(1024);
       const fdFull = await fs.promises.open(filePath, 'r');
-      await fdFull.read(fullHeader, 0, 512, 0);
+      await fdFull.read(fullHeader, 0, 1024, 0);
       await fdFull.close();
 
       if (fullHeader.indexOf('moov') === -1) {
         return { isValid: false, fileSize: stat.size, error: 'Invalid MP4 video container: missing ISO moov metadata index atom.' };
+      }
+
+      if (fullHeader.indexOf('trak') === -1) {
+        return { isValid: false, fileSize: stat.size, error: 'MEDIA_OUTPUT_INVALID: MP4 container has zero track boxes (trak atom missing, nb_streams = 0).' };
       }
 
       return { isValid: true, fileSize: stat.size, formatName: 'mp4', duration: 180, hasVideo: ext === 'mp4', hasAudio: true, videoCodec: 'h264', audioCodec: 'aac' };
