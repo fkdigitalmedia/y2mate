@@ -1,5 +1,6 @@
 import path from 'path';
 import os from 'os';
+import fs from 'fs';
 
 export interface WorkerConfig {
   workerId: string;
@@ -22,15 +23,28 @@ export interface WorkerConfig {
 }
 
 function resolveFFmpegExecutable(): string {
-  if (process.env.FFMPEG_PATH) {
-    return process.env.FFMPEG_PATH;
-  }
+  const candidates: (string | undefined)[] = [
+    process.env.FFMPEG_PATH,
+    path.join(process.cwd(), 'node_modules', 'ffmpeg-static', 'ffmpeg.exe'),
+    path.join(process.cwd(), 'node_modules', 'ffmpeg-static', 'ffmpeg'),
+    path.join(os.homedir(), 'AppData', 'Local', 'Microsoft', 'WinGet', 'Links', 'ffmpeg.exe'),
+    path.join(os.homedir(), 'AppData', 'Local', 'Microsoft', 'WinGet', 'Packages', 'Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe', 'ffmpeg-9.0-full_build', 'bin', 'ffmpeg.exe'),
+    'C:\\Users\\Fkdigitalmedia\\AppData\\Local\\CapCut\\Apps\\7.8.8.3267\\ffmpeg.exe',
+  ];
+
   try {
     const ffmpegStatic = require('ffmpeg-static');
     if (ffmpegStatic && typeof ffmpegStatic === 'string') {
-      return ffmpegStatic;
+      candidates.unshift(ffmpegStatic);
     }
   } catch {}
+
+  for (const candidate of candidates) {
+    if (candidate && typeof candidate === 'string' && fs.existsSync(candidate)) {
+      return candidate;
+    }
+  }
+
   return 'ffmpeg';
 }
 

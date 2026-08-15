@@ -77,7 +77,7 @@ async function runTests() {
     console.log(`✓ Test 8 Passed: Download job created (${job.id}) in active worker pipeline`);
 
     // Wait for async worker simulation to complete
-    await new Promise((res) => setTimeout(res, 2500));
+    await new Promise((res) => setTimeout(res, 5000));
     const updatedJob = await downloadJobManager.getJob(job.id);
     if (updatedJob?.status !== 'COMPLETED') {
       console.error('Job Error:', updatedJob?.errorMessage || updatedJob?.errorCode);

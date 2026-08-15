@@ -1,4 +1,6 @@
 import fs from 'fs';
+import path from 'path';
+import os from 'os';
 import crypto from 'crypto';
 import { spawn } from 'child_process';
 import { workerConfig } from '../config';
@@ -75,11 +77,17 @@ export class MediaValidatorService {
   }
 
   private resolveFFprobePath(): string {
-    if (process.env.FFPROBE_PATH) return process.env.FFPROBE_PATH;
-    if (workerConfig.ffmpegPath && workerConfig.ffmpegPath.includes('ffmpeg')) {
+    if (process.env.FFPROBE_PATH && fs.existsSync(process.env.FFPROBE_PATH)) return process.env.FFPROBE_PATH;
+    if (workerConfig.ffmpegPath && workerConfig.ffmpegPath.toLowerCase().includes('ffmpeg')) {
       const derived = workerConfig.ffmpegPath.replace(/ffmpeg(\.exe)?$/i, 'ffprobe$1');
       if (fs.existsSync(derived)) return derived;
     }
+    const wingetFFprobe = path.join(os.homedir(), 'AppData', 'Local', 'Microsoft', 'WinGet', 'Packages', 'Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe', 'ffmpeg-9.0-full_build', 'bin', 'ffprobe.exe');
+    if (fs.existsSync(wingetFFprobe)) return wingetFFprobe;
+
+    const wingetLink = path.join(os.homedir(), 'AppData', 'Local', 'Microsoft', 'WinGet', 'Links', 'ffprobe.exe');
+    if (fs.existsSync(wingetLink)) return wingetLink;
+
     try {
       const ffprobeStatic = require('ffprobe-static');
       if (ffprobeStatic?.path && fs.existsSync(ffprobeStatic.path)) {
