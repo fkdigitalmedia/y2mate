@@ -1,6 +1,7 @@
 import path from 'path';
 import os from 'os';
 import fs from 'fs';
+import { spawnSync } from 'child_process';
 
 export interface WorkerConfig {
   workerId: string;
