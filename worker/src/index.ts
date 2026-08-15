@@ -1,3 +1,5 @@
+import http from 'http';
+import { URL } from 'url';
 import { spawnSync } from 'child_process';
 import { workerConfig, resolveFFmpegExecutable } from './config';
 import { jobQueue } from './queue/job-queue';
@@ -14,6 +16,7 @@ class WorkerRunner {
   private resolvedFFmpegPath = '';
   private cleanupInterval?: NodeJS.Timeout;
   private heartbeatInterval?: NodeJS.Timeout;
+  private httpServer?: http.Server;
 
   private checkFFmpegAvailability() {
     this.resolvedFFmpegPath = resolveFFmpegExecutable();
@@ -61,6 +64,87 @@ class WorkerRunner {
       maxInputSizeMb: workerConfig.maxInputFileSizeMb,
       timeoutSeconds: workerConfig.processingTimeoutSeconds,
       ffmpegAvailable: this.ffmpegAvailable,
+    });
+
+    // Start Built-in Worker HTTP API Server for direct Vercel RPC execution
+    const port = parseInt(process.env.PORT || '4000', 10);
+    this.httpServer = http.createServer(async (req, res) => {
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
+      if (req.method === 'OPTIONS') {
+        res.writeHead(204);
+        return res.end();
+      }
+
+      const reqUrl = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
+
+      if (reqUrl.pathname === '/api/worker/health' || reqUrl.pathname === '/health') {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({
+          status: 'ok',
+          workerId: workerConfig.workerId,
+          ffmpegAvailable: this.ffmpegAvailable,
+          activeJobs: this.activeJobsCount,
+          storageProvider: workerConfig.storageProvider,
+        }));
+      }
+
+      if (reqUrl.pathname === '/api/worker/status' && req.method === 'GET') {
+        const jobId = reqUrl.searchParams.get('jobId');
+        if (!jobId) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          return res.end(JSON.stringify({ error: 'Missing jobId parameter' }));
+        }
+        const job = await jobQueue.getJob(jobId);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({ success: true, job }));
+      }
+
+      if (reqUrl.pathname === '/api/worker/process' && req.method === 'POST') {
+        let body = '';
+        req.on('data', (chunk) => (body += chunk));
+        req.on('end', async () => {
+          try {
+            const parsed = JSON.parse(body || '{}');
+            const job = parsed.job || parsed;
+            if (!job || !job.id) {
+              res.writeHead(400, { 'Content-Type': 'application/json' });
+              return res.end(JSON.stringify({ error: 'Missing job object' }));
+            }
+
+            Logger.info(`Received HTTP process dispatch for job ${job.id}`, { jobId: job.id });
+
+            // Initialize job in queue
+            await jobQueue.updateJob(job.id, {
+              status: 'PROCESSING',
+              stage: 'DOWNLOADING',
+              progress: 15,
+            });
+
+            // Asynchronously process job with yt-dlp and FFmpeg
+            this.activeJobsCount++;
+            this.executeJob(job).finally(() => {
+              this.activeJobsCount--;
+            });
+
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            return res.end(JSON.stringify({ success: true, jobId: job.id, status: 'PROCESSING' }));
+          } catch (e: any) {
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            return res.end(JSON.stringify({ error: e.message }));
+          }
+        });
+        return;
+      }
+
+      res.writeHead(404, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Not found' }));
+    });
+
+    this.httpServer.listen(port, '0.0.0.0', () => {
+      Logger.info(`Worker HTTP Server listening on http://0.0.0.0:${port}`);
     });
 
     // Send initial worker heartbeat

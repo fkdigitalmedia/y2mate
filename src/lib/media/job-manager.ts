@@ -31,11 +31,33 @@ class DownloadJobManager {
     return job;
   }
 
+  private get workerUrl(): string {
+    return process.env.WORKER_URL || 'http://163.192.216.117:4000';
+  }
+
   private async processJobAsync(jobId: string): Promise<void> {
-    // If FFmpeg is not installed in current runtime (e.g. Vercel serverless),
-    // delegate processing exclusively to the dedicated VPS worker node via database queue.
     const ffmpegPath = resolveFFmpegExecutable();
+
+    // If running in serverless environment without FFmpeg (e.g. Vercel),
+    // dispatch the job directly to the dedicated Oracle VPS Worker HTTP API!
     if (!ffmpegPath) {
+      const job = await jobQueue.getJob(jobId);
+      if (!job) return;
+
+      try {
+        const res = await fetch(`${this.workerUrl}/api/worker/process`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ job }),
+          signal: AbortSignal.timeout(10000),
+        });
+
+        if (res.ok) {
+          await jobQueue.updateJob(jobId, { status: 'PROCESSING', stage: 'DOWNLOADING', progress: 15 });
+        }
+      } catch (err: any) {
+        // Fallback: job remains in database queue for background worker polling
+      }
       return;
     }
 
@@ -86,7 +108,24 @@ class DownloadJobManager {
   }
 
   public async getJob(jobId: string): Promise<DownloadJob | null> {
-    const job = await jobQueue.getJob(jobId);
+    let job = await jobQueue.getJob(jobId);
+
+    // If job is still in progress or not in local serverless memory, sync from dedicated worker
+    if ((!job || job.status === 'QUEUED' || job.status === 'PROCESSING') && !resolveFFmpegExecutable()) {
+      try {
+        const res = await fetch(`${this.workerUrl}/api/worker/status?jobId=${jobId}`, {
+          signal: AbortSignal.timeout(3000),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.job) {
+            job = data.job;
+            await jobQueue.updateJob(jobId, data.job);
+          }
+        }
+      } catch {}
+    }
+
     if (!job) return null;
 
     // Refresh signed URL if job completed and URL missing or expired
