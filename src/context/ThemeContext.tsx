@@ -17,7 +17,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     setMounted(true);
-    const storedTheme = localStorage.getItem('vidfetch-theme') as Theme | null;
+    const storedTheme = localStorage.getItem('y2matevideo-theme') as Theme | null;
     if (storedTheme === 'light' || storedTheme === 'dark') {
       setTheme(storedTheme);
       document.documentElement.classList.toggle('dark', storedTheme === 'dark');
@@ -31,7 +31,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const toggleTheme = () => {
     const nextTheme = theme === 'dark' ? 'light' : 'dark';
     setTheme(nextTheme);
-    localStorage.setItem('vidfetch-theme', nextTheme);
+    localStorage.setItem('y2matevideo-theme', nextTheme);
     if (nextTheme === 'dark') {
       document.documentElement.classList.add('dark');
     } else {

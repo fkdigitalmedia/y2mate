@@ -1,11 +1,11 @@
-# VidFetch - Production-Grade Media Processing & Downloader Engine
+# y2matevideo.com - Production-Grade Media Processing & Downloader Engine
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.5-blue.svg)](https://www.typescriptlang.org/)
 [![Next.js](https://img.shields.io/badge/Next.js-14.2-black.svg)](https://nextjs.org/)
 [![Vitest](https://img.shields.io/badge/Vitest-2.0-green.svg)](https://vitest.dev/)
 [![License](https://img.shields.io/badge/License-MIT-purple.svg)](LICENSE)
 
-VidFetch is a fast, production-ready, mobile-friendly online media analyzer and converter platform built with **Next.js 14 App Router**, **Tailwind CSS**, **Supabase PostgreSQL**, **Cloudflare R2 Object Storage**, and a dedicated background **Node.js/FFmpeg Worker Pipeline**.
+y2matevideo.com is a fast, production-ready, mobile-friendly online media analyzer and converter platform built with **Next.js 14 App Router**, **Tailwind CSS**, **Supabase PostgreSQL**, **Cloudflare R2 Object Storage**, and a dedicated background **Node.js/FFmpeg Worker Pipeline**.
 
 ---
 

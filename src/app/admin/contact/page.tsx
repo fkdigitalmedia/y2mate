@@ -6,9 +6,9 @@ import { Save, CheckCircle2, Mail } from 'lucide-react';
 export default function AdminContactPage() {
   const [saved, setSaved] = useState(false);
   const [form, setForm] = useState({
-    contact_email: 'support@vidfetch.com',
-    dmca_email: 'dmca@vidfetch.com',
-    organization_name: 'VidFetch Media Engine Inc.',
+    contact_email: 'support@y2matevideo.com',
+    dmca_email: 'dmca@y2matevideo.com',
+    organization_name: 'y2matevideo.com Media Engine Inc.',
   });
 
   useEffect(() => {

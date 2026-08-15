@@ -1,6 +1,6 @@
-# VidFetch Production Operations Runbook
+# y2matevideo.com Production Operations Runbook
 
-This document provides operational guidelines for deploying, operating, maintaining, and troubleshooting VidFetch in a production environment.
+This document provides operational guidelines for deploying, operating, maintaining, and troubleshooting y2matevideo.com in a production environment.
 
 ---
 
@@ -38,7 +38,7 @@ This document provides operational guidelines for deploying, operating, maintain
 
 ### B. Storage Setup (Cloudflare R2)
 1. Log in to [Cloudflare Dashboard](https://dash.cloudflare.com) -> R2 Object Storage.
-2. Create bucket: `vidfetch-temp-media`.
+2. Create bucket: `y2matevideo-temp-media`.
 3. Set Lifecycle Policy: **Delete objects after 1 day** (automatic storage purge).
 4. Generate API Tokens with `Object Read & Write` permissions.
 5. Record `STORAGE_ACCESS_KEY`, `STORAGE_SECRET_KEY`, and `STORAGE_ENDPOINT`.
@@ -68,7 +68,7 @@ This document provides operational guidelines for deploying, operating, maintain
 4. Start worker process via PM2 daemon:
    ```bash
    npm install -g pm2
-   pm2 start worker/src/index.ts --name "vidfetch-worker-01" --interpreter npx -- tsx
+   pm2 start worker/src/index.ts --name "y2matevideo-worker-01" --interpreter npx -- tsx
    pm2 save
    ```
 
@@ -82,7 +82,7 @@ This document provides operational guidelines for deploying, operating, maintain
 3. Public users receive HTTP 503 Maintenance Notice; admin portal remains accessible.
 
 ### Emergency Secret Rotation
-1. **Database Credentials**: Update `DATABASE_URL` in Vercel and Worker PM2 config, then restart worker (`pm2 restart vidfetch-worker-01`).
+1. **Database Credentials**: Update `DATABASE_URL` in Vercel and Worker PM2 config, then restart worker (`pm2 restart y2matevideo-worker-01`).
 2. **Admin / User Session Secrets**: Update `USER_SESSION_SECRET` / `ADMIN_SESSION_SECRET` in Vercel. Existing sessions will be invalidated safely.
 3. **Billing Webhook Secrets**: Update `BILLING_WEBHOOK_SECRET` in provider dashboard (Lemon Squeezy / Stripe) and Vercel simultaneously.
 
@@ -93,7 +93,7 @@ If worker crashes during download:
 3. Click **Clear Stuck Lease** or trigger manual safe retry.
 4. Restart worker daemon:
    ```bash
-   pm2 restart vidfetch-worker-01
+   pm2 restart y2matevideo-worker-01
    ```
 
 ---

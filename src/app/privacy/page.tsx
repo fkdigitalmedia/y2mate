@@ -1,8 +1,8 @@
 import React from 'react';
 
 export const metadata = {
-  title: 'Privacy Policy | VidFetch',
-  description: 'Privacy Policy describing how VidFetch handles user data, cookies, logs, and security.',
+  title: 'Privacy Policy | y2matevideo.com',
+  description: 'Privacy Policy describing how y2matevideo.com handles user data, cookies, logs, and security.',
 };
 
 export default function PrivacyPage() {
@@ -21,7 +21,7 @@ export default function PrivacyPage() {
         <section className="space-y-3">
           <h2 className="text-xl font-bold text-slate-900 dark:text-white">1. Data Collection & Privacy First</h2>
           <p>
-            VidFetch is designed to prioritize user privacy. We do not require user accounts, registration, or personal information (such as name, email address, or phone number) to use our service.
+            y2matevideo.com is designed to prioritize user privacy. We do not require user accounts, registration, or personal information (such as name, email address, or phone number) to use our service.
           </p>
         </section>
 

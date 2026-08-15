@@ -21,7 +21,7 @@ export default function AnnouncementBar() {
           if (json.settings.announcement_enabled) {
             setAnnouncement({
               enabled: true,
-              message: json.settings.announcement_message || 'Welcome to VidFetch!',
+              message: json.settings.announcement_message || 'Welcome to y2matevideo.com!',
               url: json.settings.announcement_url || '/video-downloader',
             });
           }

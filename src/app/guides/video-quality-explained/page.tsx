@@ -8,7 +8,7 @@ import { constructMetadata } from '@/config/seo';
 import { getRelatedLinks } from '@/lib/internal-links';
 
 export const metadata: Metadata = constructMetadata({
-  title: 'Video Quality & Resolutions Explained – 360p, 720p, 1080p | VidFetch',
+  title: 'Video Quality & Resolutions Explained – 360p, 720p, 1080p | y2matevideo.com',
   description: 'Learn how video resolution, frame rates, and bitrates affect download file sizes and clarity.',
   canonical: '/guides/video-quality-explained',
 });

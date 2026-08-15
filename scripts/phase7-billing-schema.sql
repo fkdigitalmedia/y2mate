@@ -70,7 +70,7 @@ ON CONFLICT (id) DO NOTHING;
 INSERT INTO plans (id, name, slug, description, price, currency, billing_interval, active, features, limits)
 VALUES (
   'plan_premium_monthly',
-  'VidFetch Premium',
+  'y2matevideo Premium',
   'premium-monthly',
   'High-speed priority downloading with expanded limits and zero ads.',
   9.99,

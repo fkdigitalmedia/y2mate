@@ -62,11 +62,11 @@ ALTER TABLE worker_heartbeats ENABLE ROW LEVEL SECURITY;
 ALTER TABLE admin_audit_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE system_errors ENABLE ROW LEVEL SECURITY;
 
--- Default Admin User Seed (email: admin@vidfetch.com, password: adminpassword)
+-- Default Admin User Seed (email: admin@y2matevideo.com, password: adminpassword)
 INSERT INTO admin_users (id, email, password_hash, role)
 VALUES (
   'admin_01',
-  'admin@vidfetch.com',
+  'admin@y2matevideo.com',
   '$2a$10$7v2L5bM1L3x4c5v6b7n8mO1P2Q3R4S5T6U7V8W9X0Y1Z2a3b4c5d6e',
   'ADMIN'
 )

@@ -7,20 +7,20 @@ export default function CookieConsent() {
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
-    const consent = localStorage.getItem('vidfetch_analytics_consent');
+    const consent = localStorage.getItem('y2matevideo_analytics_consent');
     if (!consent) {
       setIsVisible(true);
     }
   }, []);
 
   const handleAccept = () => {
-    localStorage.setItem('vidfetch_analytics_consent', 'granted');
+    localStorage.setItem('y2matevideo_analytics_consent', 'granted');
     setIsVisible(false);
     window.location.reload();
   };
 
   const handleDecline = () => {
-    localStorage.setItem('vidfetch_analytics_consent', 'denied');
+    localStorage.setItem('y2matevideo_analytics_consent', 'denied');
     setIsVisible(false);
   };
 

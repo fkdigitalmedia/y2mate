@@ -6,8 +6,8 @@ describe('FFmpegService Argument Construction', () => {
 
   it('builds safe audio extraction arguments without shell injection', () => {
     const args = ffmpeg.buildFFmpegArgs({
-      inputPath: '/tmp/vidfetch/job1/input.mp4',
-      outputPath: '/tmp/vidfetch/job1/output.mp3',
+      inputPath: '/tmp/y2matevideo/job1/input.mp4',
+      outputPath: '/tmp/y2matevideo/job1/output.mp3',
       targetFormat: {
         id: 'a320k',
         type: 'audio',
@@ -23,20 +23,20 @@ describe('FFmpegService Argument Construction', () => {
     expect(args).toEqual([
       '-y',
       '-i',
-      '/tmp/vidfetch/job1/input.mp4',
+      '/tmp/y2matevideo/job1/input.mp4',
       '-vn',
       '-c:a',
       'libmp3lame',
       '-b:a',
       '320k',
-      '/tmp/vidfetch/job1/output.mp3',
+      '/tmp/y2matevideo/job1/output.mp3',
     ]);
   });
 
   it('builds safe video container copy arguments', () => {
     const args = ffmpeg.buildFFmpegArgs({
-      inputPath: '/tmp/vidfetch/job1/input.mp4',
-      outputPath: '/tmp/vidfetch/job1/output.mp4',
+      inputPath: '/tmp/y2matevideo/job1/input.mp4',
+      outputPath: '/tmp/y2matevideo/job1/output.mp4',
       targetFormat: {
         id: 'v1080p',
         type: 'video',
@@ -51,10 +51,10 @@ describe('FFmpegService Argument Construction', () => {
     expect(args).toEqual([
       '-y',
       '-i',
-      '/tmp/vidfetch/job1/input.mp4',
+      '/tmp/y2matevideo/job1/input.mp4',
       '-c',
       'copy',
-      '/tmp/vidfetch/job1/output.mp4',
+      '/tmp/y2matevideo/job1/output.mp4',
     ]);
   });
 });

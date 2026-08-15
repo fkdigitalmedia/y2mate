@@ -1,12 +1,12 @@
 import type { Metadata } from 'next';
 
 export const seoConfig = {
-  siteName: 'y2mate',
-  siteUrl: 'https://y2mate.us.cc',
-  defaultTitle: 'Video Downloader - y2mate',
+  siteName: 'y2matevideo.com',
+  siteUrl: 'https://y2matevideo.com',
+  defaultTitle: 'Video Downloader – y2matevideo.com',
   defaultDescription: 'Download supported online videos in available video and audio formats with a simple and fast downloader.',
   defaultImage: '/og-image.jpg',
-  twitterHandle: '@y2mate',
+  twitterHandle: '@y2matevideo',
   locale: 'en_US',
   googleSiteVerification: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
 };

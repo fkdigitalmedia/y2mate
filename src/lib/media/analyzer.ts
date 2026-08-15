@@ -25,7 +25,7 @@ export class MediaAnalyzerService {
     // Step 1: Check Maintenance Mode
     const maintenanceMode = await settingsService.getSetting('maintenance_mode', false);
     if (maintenanceMode) {
-      throw new MediaEngineError('TEMPORARY_ERROR', 'y2mate is currently undergoing scheduled maintenance. Please try again shortly.', 503);
+      throw new MediaEngineError('TEMPORARY_ERROR', 'y2matevideo.com is currently undergoing scheduled maintenance. Please try again shortly.', 503);
     }
 
     // Step 2: Validate & Normalize URL

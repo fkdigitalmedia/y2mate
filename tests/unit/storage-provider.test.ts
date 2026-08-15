@@ -8,7 +8,7 @@ describe('StorageProvider & Signed URLs', () => {
   const testFile = path.join(__dirname, 'test_sample.txt');
 
   it('uploads a file and generates a signed URL with expiration', async () => {
-    await fs.promises.writeFile(testFile, 'VidFetch Storage Test Content');
+    await fs.promises.writeFile(testFile, 'y2matevideo.com Storage Test Content');
 
     const key = 'downloads/job_test_123/result.mp4';
     await storage.uploadFile(key, testFile, 'video/mp4');

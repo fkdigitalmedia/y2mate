@@ -8,8 +8,8 @@ export interface UserSession {
   createdAt: number;
 }
 
-const USER_SESSION_COOKIE = 'y2mate_user_session';
-const USER_SECRET_KEY = process.env.USER_SESSION_SECRET || 'y2mate-user-session-secret-key-2026';
+const USER_SESSION_COOKIE = 'y2matevideo_user_session';
+const USER_SECRET_KEY = process.env.USER_SESSION_SECRET || 'y2matevideo-user-session-secret-key-2026';
 
 /**
  * Creates a signed user session token.
@@ -100,10 +100,10 @@ export function clearUserAuthCookie() {
 export const userDatabaseInMemory = new Map<string, { id: string; email: string; passwordHash: string; displayName?: string; role: 'USER' | 'ADMIN' }>();
 
 // Seed initial test account
-userDatabaseInMemory.set('user@y2mate.us.cc', {
+userDatabaseInMemory.set('user@y2matevideo.com', {
   id: 'usr_test_01',
-  email: 'user@y2mate.us.cc',
+  email: 'user@y2matevideo.com',
   passwordHash: 'userpassword123',
-  displayName: 'y2mate Member',
+  displayName: 'y2matevideo Member',
   role: 'USER',
 });

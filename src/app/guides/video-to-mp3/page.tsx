@@ -8,7 +8,7 @@ import { constructMetadata } from '@/config/seo';
 import { getRelatedLinks } from '@/lib/internal-links';
 
 export const metadata: Metadata = constructMetadata({
-  title: 'Video to MP3 Extraction Guide – Bitrates & Codecs | VidFetch',
+  title: 'Video to MP3 Extraction Guide – Bitrates & Codecs | y2matevideo.com',
   description: 'Understand audio extraction, bitrates (128kbps vs 320kbps), and AAC vs MP3 codecs.',
   canonical: '/guides/video-to-mp3',
 });
@@ -43,7 +43,7 @@ export default function VideoToMp3GuidePage() {
           <section className="space-y-3">
             <h2 className="text-2xl font-bold text-slate-900 dark:text-white">What Happens During Audio Extraction?</h2>
             <p>
-              When extracting audio from a video stream, VidFetch parses the media container to isolate the audio track (`-vn`). If the source already contains a compatible AAC stream, it can be remuxed directly into an M4A file, or re-encoded into MP3 using the `libmp3lame` codec.
+              When extracting audio from a video stream, y2matevideo.com parses the media container to isolate the audio track (`-vn`). If the source already contains a compatible AAC stream, it can be remuxed directly into an M4A file, or re-encoded into MP3 using the `libmp3lame` codec.
             </p>
           </section>
 

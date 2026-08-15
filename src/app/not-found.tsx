@@ -4,7 +4,7 @@ import { ArrowLeft, FileQuestion } from 'lucide-react';
 import { constructMetadata } from '@/config/seo';
 
 export const metadata = constructMetadata({
-  title: '404 - Page Not Found | VidFetch',
+  title: '404 - Page Not Found | y2matevideo.com',
   description: 'The page you are looking for does not exist or has been moved.',
   noindex: true,
 });

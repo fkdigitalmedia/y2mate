@@ -1,5 +1,5 @@
 /**
- * Safe filename generator for VidFetch media processing.
+ * Safe filename generator for y2matevideo.com media processing.
  * Enforces path traversal prevention, control character stripping, length bounds,
  * and valid extension formatting.
  */

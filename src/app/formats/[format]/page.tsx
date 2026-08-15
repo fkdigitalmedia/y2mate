@@ -149,11 +149,11 @@ export async function generateMetadata({ params }: { params: { format: string } 
   const format = FORMAT_DETAILS[formatKey];
 
   if (!format) {
-    return constructMetadata({ title: 'Format Not Found | VidFetch', noindex: true });
+    return constructMetadata({ title: 'Format Not Found | y2matevideo.com', noindex: true });
   }
 
   return constructMetadata({
-    title: `${format.name} Format Guide – Use Cases & Specs | VidFetch`,
+    title: `${format.name} Format Guide – Use Cases & Specs | y2matevideo.com`,
     description: format.description,
     canonical: `/formats/${formatKey}`,
   });

@@ -1,6 +1,6 @@
 import { cookies } from 'next/headers';
 
-const ANON_COOKIE_NAME = 'y2mate_anon_id';
+const ANON_COOKIE_NAME = 'y2matevideo_anon_id';
 
 /**
  * Retrieves existing anonymous user ID or generates a new secure random identifier.

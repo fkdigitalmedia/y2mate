@@ -17,7 +17,7 @@ export class CleanupService {
 
     Logger.info(`Starting scheduled background cleanup cycle (TTL: ${workerConfig.jobTtlMinutes}m)...`);
 
-    // 1. Purge abandoned job temp folders in /tmp/vidfetch/
+    // 1. Purge abandoned job temp folders in /tmp/y2matevideo/
     try {
       const tempBase = workerConfig.tempBaseDir;
       if (fs.existsSync(tempBase)) {

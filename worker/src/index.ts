@@ -14,7 +14,7 @@ class WorkerRunner {
   public async start() {
     this.isRunning = true;
 
-    Logger.info(`y2mate Processing Worker Service Online`, {
+    Logger.info(`y2matevideo.com Processing Worker Service Online`, {
       workerId: workerConfig.workerId,
       concurrency: workerConfig.concurrency,
       storageProvider: workerConfig.storageProvider,

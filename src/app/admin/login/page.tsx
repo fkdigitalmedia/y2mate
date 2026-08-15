@@ -80,7 +80,7 @@ export default function AdminLoginPage() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="admin@vidfetch.com"
+                placeholder="admin@y2matevideo.com"
                 disabled={isLoading}
                 className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-brand-500 transition-colors"
               />
@@ -128,7 +128,7 @@ export default function AdminLoginPage() {
             className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition-colors"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Back to VidFetch</span>
+            <span>Back to y2matevideo.com</span>
           </Link>
         </div>
       </div>

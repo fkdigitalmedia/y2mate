@@ -129,7 +129,7 @@ export default function ProgressModal({
         {/* Modal Title & Stage */}
         <div className="space-y-1">
           <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
-            y2mate Downloader Engine
+            y2matevideo Downloader Engine
           </span>
           <h3 className="text-lg font-bold text-slate-900 dark:text-white line-clamp-1">
             {currentStatus === 'COMPLETED' ? 'Your Download is Ready' : 'Preparing Your Download'}

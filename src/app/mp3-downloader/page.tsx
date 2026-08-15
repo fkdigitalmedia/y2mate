@@ -12,8 +12,8 @@ import { getRelatedLinks } from '@/lib/internal-links';
 import { siteConfig } from '@/config/site';
 
 export const metadata: Metadata = constructMetadata({
-  title: 'MP3 Downloader – Convert Videos to High Quality Audio | VidFetch',
-  description: 'Extract MP3 audio streams up to 320 kbps from permitted video links with VidFetch.',
+  title: 'MP3 Downloader – Convert Videos to High Quality Audio | y2matevideo.com',
+  description: 'Extract MP3 audio streams up to 320 kbps from permitted video links with y2matevideo.com.',
   canonical: '/mp3-downloader',
 });
 
@@ -24,7 +24,7 @@ export default function Mp3DownloaderPage() {
   const pageFaqs = [
     {
       question: 'What audio bitrates are available for MP3 downloads?',
-      answer: 'VidFetch supports MP3 audio extractions at 320 kbps High Quality and 128 kbps Standard Quality, depending on source audio stream availability.',
+      answer: 'y2matevideo.com supports MP3 audio extractions at 320 kbps High Quality and 128 kbps Standard Quality, depending on source audio stream availability.',
     },
     {
       question: 'Is audio extraction performed without losing quality?',
@@ -35,7 +35,7 @@ export default function Mp3DownloaderPage() {
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'WebApplication',
-    name: 'VidFetch MP3 Downloader',
+    name: 'y2matevideo.com MP3 Downloader',
     url: `${siteConfig.url}/mp3-downloader`,
     description: 'Convert online video streams into high-quality MP3 audio files.',
     applicationCategory: 'MultimediaApplication',
@@ -67,7 +67,7 @@ export default function Mp3DownloaderPage() {
           <section className="p-8 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-md space-y-4">
             <h2 className="text-2xl font-bold text-slate-900 dark:text-white">High Quality MP3 Extraction Architecture</h2>
             <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed">
-              When converting video streams to MP3 audio, VidFetch utilizes an isolated FFmpeg audio extraction worker. The worker strips the video stream (`-vn`) and encodes the audio track using the `libmp3lame` codec, ensuring maximum compatibility with music players and smartphones.
+              When converting video streams to MP3 audio, y2matevideo.com utilizes an isolated FFmpeg audio extraction worker. The worker strips the video stream (`-vn`) and encodes the audio track using the `libmp3lame` codec, ensuring maximum compatibility with music players and smartphones.
             </p>
           </section>
 

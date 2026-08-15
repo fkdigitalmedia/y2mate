@@ -27,17 +27,17 @@ const PLATFORM_DETAILS: Record<string, PlatformDetail> = {
     id: 'youtube',
     name: 'YouTube',
     tagline: 'Download YouTube Videos & Extract MP3 Audio',
-    description: 'Analyze permitted public YouTube video URLs and download available MP4 video or MP3 audio files with VidFetch.',
-    howItWorks: 'Paste any public YouTube watch link into VidFetch to analyze available 360p, 720p, 1080p MP4 formats and 128kbps/320kbps MP3 audio options.',
+    description: 'Analyze permitted public YouTube video URLs and download available MP4 video or MP3 audio files with y2matevideo.com.',
+    howItWorks: 'Paste any public YouTube watch link into y2matevideo.com to analyze available 360p, 720p, 1080p MP4 formats and 128kbps/320kbps MP3 audio options.',
     supportedFormatsList: ['1080p Full HD MP4', '720p HD MP4', '480p SD MP4', '360p Compact MP4', '320 kbps High Quality MP3', '128 kbps Standard MP3'],
     faqs: [
       {
         question: 'Can I download YouTube videos in 1080p HD?',
-        answer: 'Yes, VidFetch analyzes all resolutions made publicly available by YouTube source streams up to 1080p Full HD.',
+        answer: 'Yes, y2matevideo.com analyzes all resolutions made publicly available by YouTube source streams up to 1080p Full HD.',
       },
       {
         question: 'Can I convert YouTube videos to MP3 audio?',
-        answer: 'Yes, VidFetch supports MP3 audio extraction at 320 kbps and 128 kbps for permitted YouTube links.',
+        answer: 'Yes, y2matevideo.com supports MP3 audio extraction at 320 kbps and 128 kbps for permitted YouTube links.',
       },
     ],
   },
@@ -60,12 +60,12 @@ const PLATFORM_DETAILS: Record<string, PlatformDetail> = {
     name: 'TikTok',
     tagline: 'Download TikTok Videos & Audio',
     description: 'Save permitted short-form TikTok videos and extract background audio tracks.',
-    howItWorks: 'Paste the TikTok video share link into VidFetch to extract HD MP4 video or MP3 audio tracks.',
+    howItWorks: 'Paste the TikTok video share link into y2matevideo.com to extract HD MP4 video or MP3 audio tracks.',
     supportedFormatsList: ['HD Video MP4', '192 kbps MP3 Audio Stream'],
     faqs: [
       {
         question: 'Can I extract audio from TikTok videos?',
-        answer: 'Yes, VidFetch allows extracting audio tracks from permitted TikTok videos into MP3 files.',
+        answer: 'Yes, y2matevideo.com allows extracting audio tracks from permitted TikTok videos into MP3 files.',
       },
     ],
   },
@@ -90,11 +90,11 @@ export async function generateMetadata({ params }: { params: { platform: string 
   const platform = PLATFORM_DETAILS[platformKey];
 
   if (!platform) {
-    return constructMetadata({ title: 'Platform Not Found | VidFetch', noindex: true });
+    return constructMetadata({ title: 'Platform Not Found | y2matevideo.com', noindex: true });
   }
 
   return constructMetadata({
-    title: `${platform.name} Video Downloader – Save ${platform.name} Videos | VidFetch`,
+    title: `${platform.name} Video Downloader – Save ${platform.name} Videos | y2matevideo.com`,
     description: platform.description,
     canonical: `/platforms/${platformKey}`,
   });
@@ -118,7 +118,7 @@ export default function PlatformPage({ params }: { params: { platform: string } 
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'WebApplication',
-    name: `VidFetch ${platform.name} Downloader`,
+    name: `y2matevideo.com ${platform.name} Downloader`,
     url: `${siteConfig.url}/platforms/${platformKey}`,
     description: platform.description,
     applicationCategory: 'MultimediaApplication',

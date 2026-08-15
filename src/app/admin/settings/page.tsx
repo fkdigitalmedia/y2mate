@@ -9,12 +9,12 @@ export default function AdminSettingsPage() {
   const [error, setError] = useState<string | null>(null);
 
   const [form, setForm] = useState({
-    site_name: 'VidFetch',
-    site_url: 'https://vidfetch.com',
-    contact_email: 'support@vidfetch.com',
+    site_name: 'y2matevideo.com',
+    site_url: 'https://y2matevideo.com',
+    contact_email: 'support@y2matevideo.com',
     maintenance_mode: false,
     maintenance_title: 'System Maintenance',
-    maintenance_message: 'VidFetch is currently undergoing scheduled maintenance.',
+    maintenance_message: 'y2matevideo.com is currently undergoing scheduled maintenance.',
   });
 
   useEffect(() => {

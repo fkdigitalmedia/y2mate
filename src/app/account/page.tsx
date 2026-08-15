@@ -55,7 +55,7 @@ export default function AccountPage() {
               <User className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="font-bold text-slate-900 dark:text-white text-base">{user.displayName || 'VidFetch User'}</h3>
+              <h3 className="font-bold text-slate-900 dark:text-white text-base">{user.displayName || 'y2matevideo User'}</h3>
               <p className="text-xs text-slate-400 truncate">{user.email}</p>
             </div>
           </div>
@@ -74,7 +74,7 @@ export default function AccountPage() {
           <div className="flex items-center gap-2">
             <Zap className={`w-4 h-4 ${user.isPremium ? 'text-amber-500' : 'text-slate-400'}`} />
             <span className="text-lg font-bold text-slate-900 dark:text-white">
-              {user.isPremium ? 'VidFetch Premium' : 'Free Tier'}
+              {user.isPremium ? 'y2matevideo Premium' : 'Free Tier'}
             </span>
           </div>
           <Link

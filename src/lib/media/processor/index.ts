@@ -17,7 +17,7 @@ export class MediaProcessorService implements IMediaProcessor {
     try {
       // Simulate isolated worker processing steps without shell command injection vulnerability
       const fileKey = `output_${job.id}_${format.extension}`;
-      const dummyContent = `[VidFetch Media Container Content - ${format.quality}]`;
+      const dummyContent = `[y2matevideo.com Media Container Content - ${format.quality}]`;
 
       await storageProvider.uploadFile(fileKey, dummyContent, format.mimeType);
 

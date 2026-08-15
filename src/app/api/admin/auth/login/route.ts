@@ -33,7 +33,7 @@ export async function POST(request: Request) {
     }
 
     // Default admin credentials check (or Supabase Auth verification)
-    const expectedAdminEmail = process.env.ADMIN_EMAIL || 'admin@vidfetch.com';
+    const expectedAdminEmail = process.env.ADMIN_EMAIL || 'admin@y2matevideo.com';
     const expectedAdminPassword = process.env.ADMIN_PASSWORD || 'adminpassword';
 
     const normalizedEmail = String(email).trim().toLowerCase();

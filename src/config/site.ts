@@ -1,9 +1,9 @@
 export const siteConfig = {
-  name: 'y2mate',
+  name: 'y2matevideo.com',
   tagline: 'Online Video Downloader',
-  description: 'y2mate lets you analyze supported video URLs and choose available video or audio formats in a simple, mobile-friendly interface.',
-  url: 'https://y2mate.us.cc',
-  domain: 'y2mate.us.cc',
+  description: 'y2matevideo.com lets you analyze supported video URLs and choose available video or audio formats in a simple, mobile-friendly interface.',
+  url: 'https://y2matevideo.com',
+  domain: 'y2matevideo.com',
   ogImage: '/og-image.jpg',
   navLinks: [
     { name: 'Video Downloader', href: '/video-downloader' },
@@ -54,8 +54,8 @@ export const siteConfig = {
   ],
   faqItems: [
     {
-      question: 'How does y2mate analyze video URLs?',
-      answer: 'y2mate checks the URL for permitted domains and retrieves available format metadata directly from public source streams.',
+      question: 'How does y2matevideo.com analyze video URLs?',
+      answer: 'y2matevideo.com checks the URL for permitted domains and retrieves available format metadata directly from public source streams.',
     },
     {
       question: 'Which formats and qualities can I choose?',
@@ -70,8 +70,8 @@ export const siteConfig = {
       answer: 'Signed object storage download links remain valid for approximately 30 minutes before being automatically purged during routine cleanup.',
     },
     {
-      question: 'Do I need to sign up or pay to use y2mate?',
-      answer: 'No account, registration, or subscription is required. y2mate is 100% free to use in any modern desktop or mobile browser.',
+      question: 'Do I need to sign up or pay to use y2matevideo.com?',
+      answer: 'No account, registration, or subscription is required. y2matevideo.com is 100% free to use in any modern desktop or mobile browser.',
     },
   ],
   legalNotice: 'Please only download content you own or have permission to download. You are responsible for complying with applicable laws and platform terms.',

@@ -9,7 +9,7 @@ import { getRelatedLinks } from '@/lib/internal-links';
 import { siteConfig } from '@/config/site';
 
 export const metadata: Metadata = constructMetadata({
-  title: 'How to Download Online Videos Step-by-Step Guide | VidFetch',
+  title: 'How to Download Online Videos Step-by-Step Guide | y2matevideo.com',
   description: 'Learn how to analyze, select formats, and save web videos safely on mobile and desktop devices.',
   canonical: '/guides/how-to-download-online-videos',
 });
@@ -60,9 +60,9 @@ export default function HowToDownloadGuidePage() {
             </section>
 
             <section className="space-y-3">
-              <h2 className="text-2xl font-bold text-slate-900 dark:text-white">2. Paste into VidFetch</h2>
+              <h2 className="text-2xl font-bold text-slate-900 dark:text-white">2. Paste into y2matevideo.com</h2>
               <p>
-                Navigate to VidFetch, paste the copied link into the URL input box, and press <strong>Analyze</strong>. VidFetch verifies the URL, checks for domain permissions, and retrieves available format stream metadata.
+                Navigate to y2matevideo.com, paste the copied link into the URL input box, and press <strong>Analyze</strong>. y2matevideo.com verifies the URL, checks for domain permissions, and retrieves available format stream metadata.
               </p>
             </section>
 

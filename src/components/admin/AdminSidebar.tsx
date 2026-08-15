@@ -119,7 +119,7 @@ export default function AdminSidebar() {
       {/* Mobile Menu Toggle Button */}
       <div className="md:hidden bg-slate-900 text-white p-3 flex items-center justify-between border-b border-slate-800">
         <div className="flex items-center gap-2">
-          <span className="font-bold text-sm font-mono lowercase">y2mate Admin</span>
+          <span className="font-bold text-sm font-mono lowercase">y2matevideo Admin</span>
         </div>
         <button
           onClick={() => setMobileOpen(!mobileOpen)}

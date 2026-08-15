@@ -4,7 +4,7 @@ export async function GET() {
   return NextResponse.json({
     status: 'ok',
     timestamp: new Date().toISOString(),
-    engine: 'VidFetch Phase 2 Media Engine Architecture',
+    engine: 'y2matevideo.com Media Engine Architecture',
     checks: {
       api: 'ok',
       database: 'ok',

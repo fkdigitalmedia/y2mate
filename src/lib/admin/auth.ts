@@ -7,8 +7,8 @@ export interface AdminUserSession {
   createdAt: number;
 }
 
-const ADMIN_SESSION_COOKIE = 'y2mate_admin_session';
-const ADMIN_SECRET_KEY = process.env.ADMIN_SESSION_SECRET || 'y2mate-admin-secret-session-key-2026';
+const ADMIN_SESSION_COOKIE = 'y2matevideo_admin_session';
+const ADMIN_SECRET_KEY = process.env.ADMIN_SESSION_SECRET || 'y2matevideo-admin-secret-session-key-2026';
 
 /**
  * Creates a signed admin session token.

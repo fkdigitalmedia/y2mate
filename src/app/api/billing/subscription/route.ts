@@ -11,7 +11,7 @@ export async function GET(request: Request) {
   const isPremium = await entitlementService.isPremium(session.id);
 
   const subscription = {
-    planName: isPremium ? 'y2mate Premium' : 'Free Tier',
+    planName: isPremium ? 'y2matevideo Premium' : 'Free Tier',
     status: isPremium ? 'ACTIVE' : 'INACTIVE',
     price: isPremium ? '$9.99 / month' : 'Free',
     nextBillingDate: isPremium ? 'September 14, 2026' : 'N/A',

@@ -1,8 +1,8 @@
 import React from 'react';
 
 export const metadata = {
-  title: 'Terms of Service | VidFetch',
-  description: 'Terms of Service and legal usage policy for the VidFetch online media downloader service.',
+  title: 'Terms of Service | y2matevideo.com',
+  description: 'Terms of Service and legal usage policy for the y2matevideo.com online media downloader service.',
 };
 
 export default function TermsPage() {
@@ -21,27 +21,27 @@ export default function TermsPage() {
         <section className="space-y-3">
           <h2 className="text-xl font-bold text-slate-900 dark:text-white">1. Acceptance of Terms</h2>
           <p>
-            By accessing or using the VidFetch web application, you agree to be bound by these Terms of Service. If you do not agree with any part of these terms, you must refrain from using the service.
+            By accessing or using the y2matevideo.com web application, you agree to be bound by these Terms of Service. If you do not agree with any part of these terms, you must refrain from using the service.
           </p>
         </section>
 
         <section className="space-y-3">
           <h2 className="text-xl font-bold text-slate-900 dark:text-white">2. User Responsibility & Permitted Use</h2>
           <p>
-            VidFetch provides a technical media analysis tool. Users are strictly required to only process and download content that they own, have explicit written permission to download, or content that the source/platform explicitly makes available for public download.
+            y2matevideo.com provides a technical media analysis tool. Users are strictly required to only process and download content that they own, have explicit written permission to download, or content that the source/platform explicitly makes available for public download.
           </p>
           <p>
-            You agree not to use VidFetch for unauthorized download of copyright-protected material or in violation of applicable laws or third-party platform terms of service.
+            You agree not to use y2matevideo.com for unauthorized download of copyright-protected material or in violation of applicable laws or third-party platform terms of service.
           </p>
         </section>
 
         <section className="space-y-3">
           <h2 className="text-xl font-bold text-slate-900 dark:text-white">3. Disclaimer of Ownership & Liability</h2>
           <p>
-            VidFetch does not store, host, or claim ownership over any external media files analyzed through the tool. All media titles, thumbnails, and files remain the intellectual property of their respective creators and source platforms.
+            y2matevideo.com does not store, host, or claim ownership over any external media files analyzed through the tool. All media titles, thumbnails, and files remain the intellectual property of their respective creators and source platforms.
           </p>
           <p>
-            VidFetch is provided &quot;as is&quot; without warranty of any kind. We are not liable for any damages resulting from your use of the service.
+            y2matevideo.com is provided &quot;as is&quot; without warranty of any kind. We are not liable for any damages resulting from your use of the service.
           </p>
         </section>
 

@@ -14,7 +14,7 @@ export async function POST(request: Request) {
     // Server-side plan resolution (NEVER accept price directly from browser payload)
     const activePlan = {
       id: 'plan_premium_monthly',
-      name: 'y2mate Premium',
+      name: 'y2matevideo Premium',
       slug: 'premium-monthly',
       price: 9.99,
       currency: 'USD',

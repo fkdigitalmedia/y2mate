@@ -8,7 +8,7 @@ import { constructMetadata } from '@/config/seo';
 import { getRelatedLinks } from '@/lib/internal-links';
 
 export const metadata: Metadata = constructMetadata({
-  title: 'Supported Video & Audio Media Formats | VidFetch',
+  title: 'Supported Video & Audio Media Formats | y2matevideo.com',
   description: 'Explore supported video and audio formats including MP4, MP3, WebM, and M4A with bitrate and resolution details.',
   canonical: '/formats',
 });
@@ -26,7 +26,7 @@ export default function FormatsPage() {
           Supported Formats & Resolutions
         </h1>
         <p className="text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto">
-          VidFetch detects and presents all available video resolutions and audio quality options provided by source platforms.
+          y2matevideo.com detects and presents all available video resolutions and audio quality options provided by source platforms.
         </p>
       </div>
 

@@ -2,8 +2,8 @@ import React from 'react';
 import Link from 'next/link';
 
 export const metadata = {
-  title: 'Copyright & DMCA Policy | VidFetch',
-  description: 'Copyright compliance notice and DMCA takedown request guidelines for VidFetch.',
+  title: 'Copyright & DMCA Policy | y2matevideo.com',
+  description: 'Copyright compliance notice and DMCA takedown request guidelines for y2matevideo.com.',
 };
 
 export default function CopyrightPage() {
@@ -22,14 +22,14 @@ export default function CopyrightPage() {
         <section className="space-y-3">
           <h2 className="text-xl font-bold text-slate-900 dark:text-white">1. Respect for Intellectual Property</h2>
           <p>
-            VidFetch respects the intellectual property rights of creators and copyright owners. We expect all users of our web service to comply with applicable copyright laws (including the Digital Millennium Copyright Act - DMCA).
+            y2matevideo.com respects the intellectual property rights of creators and copyright owners. We expect all users of our web service to comply with applicable copyright laws (including the Digital Millennium Copyright Act - DMCA).
           </p>
         </section>
 
         <section className="space-y-3">
           <h2 className="text-xl font-bold text-slate-900 dark:text-white">2. Content Responsibility Disclaimer</h2>
           <p>
-            VidFetch operates as a client-side and media-pass-through analysis utility. We do not host, store, catalog, or publish copyrighted video files on our infrastructure. All media content remains hosted exclusively on the original source platforms.
+            y2matevideo.com operates as a client-side and media-pass-through analysis utility. We do not host, store, catalog, or publish copyrighted video files on our infrastructure. All media content remains hosted exclusively on the original source platforms.
           </p>
         </section>
 

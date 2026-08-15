@@ -3,8 +3,8 @@ import FAQSection from '@/components/FAQSection';
 import LegalNotice from '@/components/LegalNotice';
 
 export const metadata = {
-  title: 'Frequently Asked Questions – Help & Support | VidFetch',
-  description: 'Answers to common questions about VidFetch video downloader, formats, audio extraction, and copyright compliance.',
+  title: 'Frequently Asked Questions – Help & Support | y2matevideo.com',
+  description: 'Answers to common questions about y2matevideo.com video downloader, formats, audio extraction, and copyright compliance.',
 };
 
 export default function FAQPage() {

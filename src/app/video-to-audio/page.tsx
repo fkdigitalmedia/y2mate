@@ -12,8 +12,8 @@ import { getRelatedLinks } from '@/lib/internal-links';
 import { siteConfig } from '@/config/site';
 
 export const metadata: Metadata = constructMetadata({
-  title: 'Video to Audio Converter – Extract MP3 & M4A | VidFetch',
-  description: 'Convert video URLs to MP3 and M4A audio files quickly and securely with VidFetch.',
+  title: 'Video to Audio Converter – Extract MP3 & M4A | y2matevideo.com',
+  description: 'Convert video URLs to MP3 and M4A audio files quickly and securely with y2matevideo.com.',
   canonical: '/video-to-audio',
 });
 
@@ -24,7 +24,7 @@ export default function VideoToAudioPage() {
   const pageFaqs = [
     {
       question: 'How does video to audio extraction work?',
-      answer: 'VidFetch fetches the source video stream, strips video frames, and re-encodes audio into MP3 or M4A formats using FFmpeg.',
+      answer: 'y2matevideo.com fetches the source video stream, strips video frames, and re-encodes audio into MP3 or M4A formats using FFmpeg.',
     },
   ];
 

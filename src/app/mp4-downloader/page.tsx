@@ -12,8 +12,8 @@ import { getRelatedLinks } from '@/lib/internal-links';
 import { siteConfig } from '@/config/site';
 
 export const metadata: Metadata = constructMetadata({
-  title: 'MP4 Video Downloader – Download HD MP4 Videos | VidFetch',
-  description: 'Download HD MP4 video streams in 720p and 1080p resolutions with VidFetch.',
+  title: 'MP4 Video Downloader – Download HD MP4 Videos | y2matevideo.com',
+  description: 'Download HD MP4 video streams in 720p and 1080p resolutions with y2matevideo.com.',
   canonical: '/mp4-downloader',
 });
 
@@ -28,14 +28,14 @@ export default function Mp4DownloaderPage() {
     },
     {
       question: 'Can I download 1080p MP4 videos?',
-      answer: 'Yes, if the source media provider supports 1080p resolutions, VidFetch will make 1080p Full HD MP4 downloads available.',
+      answer: 'Yes, if the source media provider supports 1080p resolutions, y2matevideo.com will make 1080p Full HD MP4 downloads available.',
     },
   ];
 
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'WebApplication',
-    name: 'VidFetch MP4 Video Downloader',
+    name: 'y2matevideo.com MP4 Video Downloader',
     url: `${siteConfig.url}/mp4-downloader`,
     description: 'Download online video files in universal MP4 container format.',
     applicationCategory: 'MultimediaApplication',
@@ -67,7 +67,7 @@ export default function Mp4DownloaderPage() {
           <section className="p-8 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-md space-y-4">
             <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Universal Device Compatibility</h2>
             <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed">
-              MP4 is the standard video container format for web video streaming. VidFetch preserves native H.264 video streams wherever available, allowing direct container remuxing without degrading video quality or re-encoding unnecessarily.
+              MP4 is the standard video container format for web video streaming. y2matevideo.com preserves native H.264 video streams wherever available, allowing direct container remuxing without degrading video quality or re-encoding unnecessarily.
             </p>
           </section>
 

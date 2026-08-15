@@ -8,7 +8,7 @@ export default function AnalyticsProvider() {
   const [hasConsent, setHasConsent] = useState(false);
 
   useEffect(() => {
-    const consent = localStorage.getItem('vidfetch_analytics_consent');
+    const consent = localStorage.getItem('y2matevideo_analytics_consent');
     if (consent === 'granted') {
       setHasConsent(true);
     }

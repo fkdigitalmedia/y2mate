@@ -6,10 +6,10 @@ import { Save, CheckCircle2, Search } from 'lucide-react';
 export default function AdminSeoPage() {
   const [saved, setSaved] = useState(false);
   const [form, setForm] = useState({
-    default_seo_title: 'Video Downloader – Download Online Videos | VidFetch',
-    default_seo_description: 'VidFetch lets you analyze supported video URLs and choose available video or audio formats in a simple, mobile-friendly interface.',
+    default_seo_title: 'Video Downloader – Download Online Videos | y2matevideo.com',
+    default_seo_description: 'y2matevideo.com lets you analyze supported video URLs and choose available video or audio formats in a simple, mobile-friendly interface.',
     default_og_image: '/og-image.jpg',
-    twitter_handle: '@vidfetch',
+    twitter_handle: '@y2matevideo',
     google_site_verification: '',
     allow_indexing: true,
   });

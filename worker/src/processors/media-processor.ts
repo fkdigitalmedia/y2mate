@@ -44,11 +44,11 @@ export class MediaJobProcessor {
         } catch (downloadErr: any) {
           // Fallback demo container generation if remote URL is placeholder/mock demo
           Logger.warn(`Streaming download notice: ${downloadErr.message}. Initializing sample container stream.`, { jobId });
-          const dummyPayload = `[VidFetch Media Container Payload - ${job.platform} - ${format.quality}]`;
+          const dummyPayload = `[y2matevideo.com Media Container Payload - ${job.platform} - ${format.quality}]`;
           await fs.promises.writeFile(inputFilePath, dummyPayload);
         }
       } else {
-        const dummyPayload = `[VidFetch Media Container Payload - ${job.platform} - ${format.quality}]`;
+        const dummyPayload = `[y2matevideo.com Media Container Payload - ${job.platform} - ${format.quality}]`;
         await fs.promises.writeFile(inputFilePath, dummyPayload);
       }
 

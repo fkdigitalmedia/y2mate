@@ -18,7 +18,7 @@ export function trackEvent(eventName: AnalyticsEvent, params?: Record<string, an
   if (typeof window === 'undefined') return;
 
   // Verify consent before emitting telemetry
-  const consent = localStorage.getItem('vidfetch_analytics_consent');
+  const consent = localStorage.getItem('y2matevideo_analytics_consent');
   if (consent !== 'granted') return;
 
   const gtag = (window as any).gtag;

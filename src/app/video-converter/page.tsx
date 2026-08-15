@@ -11,8 +11,8 @@ import { constructMetadata } from '@/config/seo';
 import { getRelatedLinks } from '@/lib/internal-links';
 
 export const metadata: Metadata = constructMetadata({
-  title: 'Online Video Converter – MP4, WebM, MP3 & M4A | VidFetch',
-  description: 'Convert online media URLs into MP4, WebM, MP3, or M4A formats with VidFetch.',
+  title: 'Online Video Converter – MP4, WebM, MP3 & M4A | y2matevideo.com',
+  description: 'Convert online media URLs into MP4, WebM, MP3, or M4A formats with y2matevideo.com.',
   canonical: '/video-converter',
 });
 
@@ -22,8 +22,8 @@ export default function VideoConverterPage() {
 
   const pageFaqs = [
     {
-      question: 'Which format conversions does VidFetch support?',
-      answer: 'VidFetch supports MP4 container remuxing, WebM HTML5 video, MP3 320kbps audio extraction, and M4A AAC audio containers.',
+      question: 'Which format conversions does y2matevideo.com support?',
+      answer: 'y2matevideo.com supports MP4 container remuxing, WebM HTML5 video, MP3 320kbps audio extraction, and M4A AAC audio containers.',
     },
   ];
 

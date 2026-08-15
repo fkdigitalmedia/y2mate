@@ -8,7 +8,7 @@ import { constructMetadata } from '@/config/seo';
 import { getRelatedLinks } from '@/lib/internal-links';
 
 export const metadata: Metadata = constructMetadata({
-  title: 'Video Formats Explained – MP4, WebM, M4A & Codecs | VidFetch',
+  title: 'Video Formats Explained – MP4, WebM, M4A & Codecs | y2matevideo.com',
   description: 'Learn the differences between video container formats, video codecs (H.264, VP9), and audio codecs (AAC, MP3).',
   canonical: '/guides/video-formats-explained',
 });

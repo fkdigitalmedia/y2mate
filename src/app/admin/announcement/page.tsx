@@ -7,7 +7,7 @@ export default function AdminAnnouncementPage() {
   const [saved, setSaved] = useState(false);
   const [form, setForm] = useState({
     announcement_enabled: false,
-    announcement_message: 'Welcome to VidFetch! High-speed media downloader engine online.',
+    announcement_message: 'Welcome to y2matevideo.com! High-speed media downloader engine online.',
     announcement_url: '/video-downloader',
   });
 

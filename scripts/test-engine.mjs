@@ -7,7 +7,7 @@ import { downloadJobManager } from '../src/lib/media/job-manager.ts';
 import { checkRateLimit } from '../src/lib/security/rate-limit.ts';
 
 async function runTests() {
-  console.log('🧪 Running VidFetch Phase 2 Engine Test Suite...\n');
+  console.log('🧪 Running y2matevideo.com Engine Test Suite...\n');
 
   // Test 1: URL Validation - Valid HTTPS URL
   {
