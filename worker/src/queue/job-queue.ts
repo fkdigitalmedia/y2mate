@@ -148,58 +148,8 @@ export class HybridJobQueue implements IJobQueue {
       }).catch((err) => Logger.warn(`Failed to sync createJob to Supabase: ${err.message}`));
     }
 
-    // Auto-process job locally if standalone or dev mode (worker daemon not running separately)
-    if (process.env.NODE_ENV !== 'production' || process.env.STORAGE_PROVIDER === 'memory' || process.env.STORAGE_PROVIDER === 'local') {
-      setTimeout(() => {
-        const currentJob = this.jobs.get(jobId);
-        if (currentJob && currentJob.status === 'QUEUED') {
-          this.autoProcessLocalJob(jobId);
-        }
-      }, 300);
-    }
-
     Logger.info(`Job created: ${jobId}`, { jobId, stage: 'QUEUED' });
     return job;
-  }
-
-  private async autoProcessLocalJob(jobId: string): Promise<void> {
-    const job = this.jobs.get(jobId);
-    if (!job || job.status !== 'QUEUED') return;
-
-    try {
-      await this.updateJob(jobId, { status: 'PROCESSING', stage: 'DOWNLOADING', progress: 20 });
-      await new Promise((res) => setTimeout(res, 400));
-
-      await this.updateJob(jobId, { stage: 'PROCESSING', progress: 60 });
-      await new Promise((res) => setTimeout(res, 500));
-
-      await this.updateJob(jobId, { stage: 'UPLOADING', progress: 90 });
-      await new Promise((res) => setTimeout(res, 300));
-
-      const fileExt = job.format?.extension || 'mp4';
-      const fileKey = `downloads/${jobId}/result.${fileExt}`;
-      const dummyDownloadUrl = `/api/download/file/${fileKey}?token=signed_demo_${Date.now()}`;
-
-      await this.updateJob(jobId, {
-        status: 'COMPLETED',
-        stage: 'COMPLETED',
-        progress: 100,
-        downloadUrl: dummyDownloadUrl,
-        fileKey: fileKey,
-        fileSize: job.format?.fileSize || '~15.2 MB',
-        fileName: `${job.platform || 'video'}_download.${fileExt}`,
-        mimeType: job.format?.mimeType || 'video/mp4',
-        completedAt: new Date().toISOString(),
-      });
-    } catch (err: any) {
-      await this.updateJob(jobId, {
-        status: 'FAILED',
-        stage: 'FAILED',
-        errorCode: 'PROCESSING_ERROR',
-        errorMessage: err.message || 'Local processing simulation failed.',
-        failedAt: new Date().toISOString(),
-      });
-    }
   }
 
   async claimJob(workerId: string): Promise<DownloadJob | null> {
