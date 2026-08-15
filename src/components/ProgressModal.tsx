@@ -89,7 +89,7 @@ export default function ProgressModal({
       isSubscribed = false;
       clearInterval(pollInterval);
     };
-  }, [jobId]);
+  }, [jobId, initJob]);
 
   if (!format) return null;
 

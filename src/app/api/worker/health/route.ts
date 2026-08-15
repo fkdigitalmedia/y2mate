@@ -1,3 +1,4 @@
+import { NextResponse } from 'next/server';
 import { resolveFFmpegExecutable } from '@worker/config';
 import { spawnSync } from 'child_process';
 

@@ -44,7 +44,7 @@ export function resolveFFmpegExecutable(): string {
   ];
 
   try {
-    const ffmpegStatic = require('ffmpeg-static');
+    const ffmpegStatic = eval("require")('ffmpeg-static');
     if (ffmpegStatic && typeof ffmpegStatic === 'string') {
       candidates.unshift(ffmpegStatic);
     }

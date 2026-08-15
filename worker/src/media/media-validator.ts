@@ -89,7 +89,7 @@ export class MediaValidatorService {
     if (fs.existsSync(wingetLink)) return wingetLink;
 
     try {
-      const ffprobeStatic = require('ffprobe-static');
+      const ffprobeStatic = eval("require")('ffprobe-static');
       if (ffprobeStatic?.path && fs.existsSync(ffprobeStatic.path)) {
         return ffprobeStatic.path;
       }
