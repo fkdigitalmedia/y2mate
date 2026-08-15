@@ -83,8 +83,16 @@ export class MediaJobProcessor {
           },
         });
       } else {
-        // Direct container remux copy
-        await fs.promises.copyFile(inputFilePath, outputFilePath);
+        // Enforce container faststart MOOV atom via FFmpeg remuxing
+        try {
+          await ffmpegService.convert({
+            inputPath: inputFilePath,
+            outputPath: outputFilePath,
+            targetFormat: { ...format, requiresProcessing: false },
+          });
+        } catch {
+          await fs.promises.copyFile(inputFilePath, outputFilePath);
+        }
       }
 
       const finalPath = fs.existsSync(outputFilePath) ? outputFilePath : inputFilePath;

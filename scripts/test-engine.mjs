@@ -71,14 +71,17 @@ async function runTests() {
     }
 
     // Test 8: Job Management & State Transitions
-    const job = downloadJobManager.createJob(result, verified);
+    const job = await downloadJobManager.createJob(result, verified);
     assert.strictEqual(job.mediaId, result.id);
     assert.ok(['QUEUED', 'PROCESSING'].includes(job.status));
     console.log(`✓ Test 8 Passed: Download job created (${job.id}) in active worker pipeline`);
 
     // Wait for async worker simulation to complete
-    await new Promise((res) => setTimeout(res, 1800));
-    const updatedJob = downloadJobManager.getJob(job.id);
+    await new Promise((res) => setTimeout(res, 2500));
+    const updatedJob = await downloadJobManager.getJob(job.id);
+    if (updatedJob?.status !== 'COMPLETED') {
+      console.error('Job Error:', updatedJob?.errorMessage || updatedJob?.errorCode);
+    }
     assert.strictEqual(updatedJob?.status, 'COMPLETED');
     assert.strictEqual(updatedJob?.progress, 100);
     assert.ok(updatedJob?.downloadUrl);

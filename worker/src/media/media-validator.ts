@@ -59,36 +59,82 @@ export class MediaValidatorService {
       return { isValid: false, fileSize: stat.size, error: `File size (${stat.size} bytes) is below minimum threshold.` };
     }
 
-    // Try FFprobe validation first
+    // FFprobe stream & codec validation
     const ffprobeInfo = await this.runFFprobe(filePath);
-    if (ffprobeInfo.isValid) {
-      const decodeCheck = await this.runFFmpegDecodeCheck(filePath);
-      if (!decodeCheck.isValid) {
-        return { isValid: false, fileSize: stat.size, error: decodeCheck.error };
-      }
+    if (!ffprobeInfo.isValid) {
       return ffprobeInfo;
     }
 
-    // Fallback: Structural magic byte and container atom inspection
-    const isStructurallyValid = await this.validateContainerStructure(filePath, expectedExt);
-    if (!isStructurallyValid.isValid) {
-      return isStructurallyValid;
+    // FFmpeg frame decode test
+    const decodeCheck = await this.runFFmpegDecodeCheck(filePath);
+    if (!decodeCheck.isValid) {
+      return { isValid: false, fileSize: stat.size, error: decodeCheck.error };
     }
 
-    return {
-      isValid: true,
-      fileSize: stat.size,
-      formatName: expectedExt.toLowerCase(),
-      duration: 5.0,
-      hasVideo: expectedExt.toLowerCase() !== 'mp3' && expectedExt.toLowerCase() !== 'm4a',
-      hasAudio: true,
-      videoCodec: expectedExt.toLowerCase() === 'mp3' ? 'none' : 'h264',
-      audioCodec: expectedExt.toLowerCase() === 'mp3' ? 'mp3' : 'aac',
-    };
+    return ffprobeInfo;
+  }
+
+  private resolveFFprobePath(): string {
+    if (process.env.FFPROBE_PATH) return process.env.FFPROBE_PATH;
+    if (workerConfig.ffmpegPath && workerConfig.ffmpegPath.includes('ffmpeg')) {
+      const derived = workerConfig.ffmpegPath.replace(/ffmpeg(\.exe)?$/i, 'ffprobe$1');
+      if (fs.existsSync(derived)) return derived;
+    }
+    try {
+      const ffprobeStatic = require('ffprobe-static');
+      if (ffprobeStatic?.path && fs.existsSync(ffprobeStatic.path)) {
+        return ffprobeStatic.path;
+      }
+    } catch {}
+    return 'ffprobe';
+  }
+
+  private async runFFmpegInspect(filePath: string): Promise<MediaInfo> {
+    const ffmpegPath = workerConfig.ffmpegPath || 'ffmpeg';
+    return new Promise((resolve) => {
+      let stderr = '';
+      try {
+        const child = spawn(ffmpegPath, ['-i', filePath], { shell: false, windowsHide: true });
+        child.stderr.on('data', (d) => (stderr += d.toString()));
+        child.on('close', () => {
+          const hasVideo = stderr.includes('Video:');
+          const hasAudio = stderr.includes('Audio:');
+          const durMatch = stderr.match(/Duration:\s*(\d+):(\d+):(\d+\.\d+)/);
+          let duration = 0;
+          if (durMatch) {
+            duration = parseFloat(durMatch[1]) * 3600 + parseFloat(durMatch[2]) * 60 + parseFloat(durMatch[3]);
+          }
+          const dimMatch = stderr.match(/(\d{3,5})x(\d{3,5})/);
+          const width = dimMatch ? parseInt(dimMatch[1], 10) : 0;
+          const height = dimMatch ? parseInt(dimMatch[2], 10) : 0;
+          const isVideoFormat = !filePath.toLowerCase().endsWith('.mp3') && !filePath.toLowerCase().endsWith('.m4a');
+
+          if (isVideoFormat && (!hasVideo || width <= 0 || height <= 0)) {
+            return resolve({
+              isValid: false,
+              error: `MEDIA_OUTPUT_INVALID: MP4 video missing video stream or valid dimensions (width=${width}, height=${height}).`,
+            });
+          }
+
+          resolve({
+            isValid: (hasVideo || hasAudio) && (duration > 0 || stderr.includes('Stream #')),
+            formatName: filePath.split('.').pop() || 'mp4',
+            duration: duration || 5.0,
+            hasVideo,
+            hasAudio,
+            videoCodec: stderr.match(/Video:\s*([^\s,]+)/)?.[1] || (hasVideo ? 'h264' : undefined),
+            audioCodec: stderr.match(/Audio:\s*([^\s,]+)/)?.[1] || (hasAudio ? 'aac' : undefined),
+          });
+        });
+        child.on('error', (err) => resolve({ isValid: false, error: err.message }));
+      } catch (err: any) {
+        resolve({ isValid: false, error: err.message });
+      }
+    });
   }
 
   private async runFFprobe(filePath: string): Promise<MediaInfo> {
-    const ffprobePath = workerConfig.ffmpegPath ? workerConfig.ffmpegPath.replace(/ffmpeg(\.exe)?$/i, 'ffprobe$1') : 'ffprobe';
+    const ffprobePath = this.resolveFFprobePath();
 
     return new Promise((resolve) => {
       const args = [
@@ -105,7 +151,7 @@ export class MediaValidatorService {
         child.stdout.on('data', (d) => (output += d.toString()));
         child.on('close', (code) => {
           if (code !== 0 || !output) {
-            return resolve({ isValid: false, error: `FFprobe returned non-zero code ${code}` });
+            return this.runFFmpegInspect(filePath).then(resolve);
           }
 
           try {
@@ -119,12 +165,23 @@ export class MediaValidatorService {
             const aStream = streams.find((s: any) => s.codec_type === 'audio');
 
             const duration = parseFloat(format.duration || '0');
+            const width = parseInt(vStream?.width || '0', 10);
+            const height = parseInt(vStream?.height || '0', 10);
 
             if (!streams || streams.length === 0) {
               return resolve({
                 isValid: false,
                 fileSize: parseInt(format.size || '0', 10),
                 error: 'MEDIA_OUTPUT_INVALID: Output file contains zero media streams (nb_streams = 0).',
+              });
+            }
+
+            const isVideoFormat = !filePath.toLowerCase().endsWith('.mp3') && !filePath.toLowerCase().endsWith('.m4a');
+            if (isVideoFormat && (!hasVideo || width <= 0 || height <= 0)) {
+              return resolve({
+                isValid: false,
+                fileSize: parseInt(format.size || '0', 10),
+                error: `MEDIA_OUTPUT_INVALID: MP4 video missing video stream or valid dimensions (width=${width}, height=${height}).`,
               });
             }
 
@@ -142,9 +199,9 @@ export class MediaValidatorService {
             resolve({ isValid: false, error: `FFprobe JSON parse error: ${err.message}` });
           }
         });
-        child.on('error', (err) => resolve({ isValid: false, error: err.message }));
-      } catch (err: any) {
-        resolve({ isValid: false, error: err.message });
+        child.on('error', () => this.runFFmpegInspect(filePath).then(resolve));
+      } catch {
+        this.runFFmpegInspect(filePath).then(resolve);
       }
     });
   }

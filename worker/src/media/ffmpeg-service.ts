@@ -47,8 +47,8 @@ export class FFmpegService {
         // Direct container remux (fast copy with moov atom faststart)
         args.push('-c', 'copy', '-movflags', '+faststart');
       } else {
-        // Standard H.264 / AAC video transcode with moov atom faststart
-        args.push('-c:v', 'libx264', '-preset', 'fast', '-crf', '23', '-c:a', 'aac', '-b:a', '128k', '-movflags', '+faststart');
+        // Standard H.264 / AAC video transcode with yuv420p pixel format & moov atom faststart
+        args.push('-c:v', 'libx264', '-preset', 'fast', '-crf', '23', '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-b:a', '128k', '-movflags', '+faststart');
       }
     }
 
@@ -66,6 +66,7 @@ export class FFmpegService {
       throw new Error(`FFmpeg input file not found: ${inputPath}`);
     }
 
+    const execPath = this.ffmpegPath || workerConfig.ffmpegPath || 'ffmpeg';
     const args = this.buildFFmpegArgs(options);
     const timeoutMs = (timeoutSeconds || workerConfig.processingTimeoutSeconds) * 1000;
 
@@ -85,17 +86,14 @@ export class FFmpegService {
 
       try {
         // Safe spawn without shell wrapper
-        child = spawn(this.ffmpegPath, args, {
+        child = spawn(execPath, args, {
           shell: false,
           windowsHide: true,
         });
       } catch (err: any) {
         clearTimeout(timer);
-        // Fallback for environment where FFmpeg executable isn't installed: simulate successful container copy if mock/dev
-        Logger.warn(`FFmpeg binary not executable in PATH (${err.message}). Performing direct container write.`, { inputPath });
-        return fs.promises.copyFile(inputPath, outputPath)
-          .then(() => resolve())
-          .catch(reject);
+        reject(new Error(`FFmpeg spawn exception: ${err.message}`));
+        return;
       }
 
       let stderrOutput = '';
@@ -119,13 +117,7 @@ export class FFmpegService {
 
       child.on('error', (err) => {
         clearTimeout(timer);
-        // Fallback copy if ffmpeg binary missing on dev machine
-        if (err.message.includes('ENOENT')) {
-          Logger.warn(`FFmpeg binary missing on system. Falling back to local file stream copy.`, { inputPath });
-          fs.promises.copyFile(inputPath, outputPath).then(() => resolve()).catch(reject);
-        } else {
-          reject(new Error(`FFmpeg spawn error: ${err.message}`));
-        }
+        reject(new Error(`FFmpeg execution error: ${err.message}`));
       });
 
       child.on('close', (code) => {
