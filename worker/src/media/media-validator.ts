@@ -62,6 +62,10 @@ export class MediaValidatorService {
     // Try FFprobe validation first
     const ffprobeInfo = await this.runFFprobe(filePath);
     if (ffprobeInfo.isValid) {
+      const decodeCheck = await this.runFFmpegDecodeCheck(filePath);
+      if (!decodeCheck.isValid) {
+        return { isValid: false, fileSize: stat.size, error: decodeCheck.error };
+      }
       return ffprobeInfo;
     }
 
@@ -133,6 +137,27 @@ export class MediaValidatorService {
         child.on('error', (err) => resolve({ isValid: false, error: err.message }));
       } catch (err: any) {
         resolve({ isValid: false, error: err.message });
+      }
+    });
+  }
+
+  private async runFFmpegDecodeCheck(filePath: string): Promise<{ isValid: boolean; error?: string }> {
+    const ffmpegPath = workerConfig.ffmpegPath || 'ffmpeg';
+    return new Promise((resolve) => {
+      let stderr = '';
+      try {
+        const child = spawn(ffmpegPath, ['-v', 'error', '-i', filePath, '-f', 'null', '-'], { shell: false, windowsHide: true });
+        child.stderr.on('data', (d) => (stderr += d.toString()));
+        child.on('close', (code) => {
+          const errLower = stderr.toLowerCase();
+          if (errLower.includes('big_values too big') || errLower.includes('error while decoding') || errLower.includes('invalid data found')) {
+            return resolve({ isValid: false, error: `FFmpeg decode error: ${stderr.trim()}` });
+          }
+          resolve({ isValid: true });
+        });
+        child.on('error', () => resolve({ isValid: true }));
+      } catch {
+        resolve({ isValid: true });
       }
     });
   }
