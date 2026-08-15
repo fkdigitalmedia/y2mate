@@ -42,13 +42,13 @@ export class FFmpegService {
         args.push('-c:a', 'libmp3lame');
       }
     } else {
-      // Video Processing (Remux vs Transcode)
+      // Video Processing (Remux vs Transcode with faststart moov atom relocator)
       if (!targetFormat.requiresProcessing && targetFormat.extension.toLowerCase() === 'mp4') {
-        // Direct container remux (fast copy)
-        args.push('-c', 'copy');
+        // Direct container remux (fast copy with moov atom faststart)
+        args.push('-c', 'copy', '-movflags', '+faststart');
       } else {
-        // Standard H.264 / AAC video transcode
-        args.push('-c:v', 'libx264', '-preset', 'fast', '-crf', '23', '-c:a', 'aac', '-b:a', '128k');
+        // Standard H.264 / AAC video transcode with moov atom faststart
+        args.push('-c:v', 'libx264', '-preset', 'fast', '-crf', '23', '-c:a', 'aac', '-b:a', '128k', '-movflags', '+faststart');
       }
     }
 

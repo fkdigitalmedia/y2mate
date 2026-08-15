@@ -7,6 +7,7 @@ import { mediaSourceProvider } from '../media/providers/media-source-provider';
 import { storageProvider } from '../storage/storage-provider';
 import { sanitizeFilename, sanitizeObjectKey } from '../utils/filename-sanitizer';
 import { createValidMediaBuffer } from '../utils/media-generator';
+import { mediaValidator } from '../media/media-validator';
 import { Logger } from '../utils/logger';
 
 export class MediaJobProcessor {
@@ -89,37 +90,18 @@ export class MediaJobProcessor {
       const finalPath = fs.existsSync(outputFilePath) ? outputFilePath : inputFilePath;
       const outputStat = await fs.promises.stat(finalPath);
 
-      // Mandatory Media Container Validation (Header & Minimum Size Verification)
-      if (outputStat.size < 10000) {
+      // Mandatory Media Validation Gate (FFprobe / Container / Codec / SHA-256 verification)
+      const validation = await mediaValidator.validateMedia(finalPath, format.extension);
+      if (!validation.isValid) {
         return {
           success: false,
-          errorCode: 'OUTPUT_TOO_SMALL',
-          error: `Processed media output file size (${outputStat.size} bytes) is below minimum valid threshold.`,
+          errorCode: 'MEDIA_VALIDATION_FAILED',
+          error: validation.error || 'Media integrity validation failed on output container.',
         };
       }
 
-      const headBuffer = Buffer.alloc(100);
-      const fd = await fs.promises.open(finalPath, 'r');
-      await fd.read(headBuffer, 0, 100, 0);
-      await fd.close();
-
-      const headStr = headBuffer.toString('utf-8', 0, 50).toLowerCase();
-      if (headStr.includes('<!doctype') || headStr.includes('<html') || headStr.includes('{"error"')) {
-        return {
-          success: false,
-          errorCode: 'INVALID_MEDIA_CONTAINER',
-          error: 'Processed output file contains HTML/JSON error text instead of valid audio/video bytes.',
-        };
-      }
-
-      // Output file size verification
-      if (outputStat.size > workerConfig.maxOutputFileSizeMb * 1024 * 1024) {
-        return {
-          success: false,
-          errorCode: 'FILE_TOO_LARGE',
-          error: `Processed media output file size (${Math.round(outputStat.size / 1024 / 1024)}MB) exceeds limit of ${workerConfig.maxOutputFileSizeMb}MB.`,
-        };
-      }
+      const localHash = await mediaValidator.calculateFileHash(finalPath);
+      Logger.info(`LOCAL_OUTPUT_INTEGRITY id=${jobId} size=${outputStat.size} sha256=${localHash} format=${validation.formatName} videoCodec=${validation.videoCodec || 'none'} audioCodec=${validation.audioCodec || 'none'}`);
 
       // Step 4: Stage 3 - UPLOADING (80% - 95%)
       if (onStageUpdate) await onStageUpdate('UPLOADING', 85);

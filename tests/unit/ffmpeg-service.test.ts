@@ -54,6 +54,8 @@ describe('FFmpegService Argument Construction', () => {
       '/tmp/y2matevideo/job1/input.mp4',
       '-c',
       'copy',
+      '-movflags',
+      '+faststart',
       '/tmp/y2matevideo/job1/output.mp4',
     ]);
   });
