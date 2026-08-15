@@ -2,6 +2,7 @@ import { DownloadJob, MediaResult, MediaFormat } from './types';
 import { jobQueue } from '@worker/queue/job-queue';
 import { storageProvider } from '@worker/storage/storage-provider';
 import { mediaJobProcessor } from '@worker/processors/media-processor';
+import { resolveFFmpegExecutable } from '@worker/config';
 
 class DownloadJobManager {
   private static instance: DownloadJobManager;
@@ -31,6 +32,13 @@ class DownloadJobManager {
   }
 
   private async processJobAsync(jobId: string): Promise<void> {
+    // If FFmpeg is not installed in current runtime (e.g. Vercel serverless),
+    // delegate processing exclusively to the dedicated VPS worker node via database queue.
+    const ffmpegPath = resolveFFmpegExecutable();
+    if (!ffmpegPath) {
+      return;
+    }
+
     // Short delay to allow separate worker process claim if active
     await new Promise((res) => setTimeout(res, 50));
 
