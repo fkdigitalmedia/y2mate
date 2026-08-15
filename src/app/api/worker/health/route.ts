@@ -1,4 +1,5 @@
-import { NextResponse } from 'next/server';
+import { resolveFFmpegExecutable } from '@worker/config';
+import { spawnSync } from 'child_process';
 
 export async function GET(request: Request) {
   const authHeader = request.headers.get('authorization');
@@ -14,10 +15,28 @@ export async function GET(request: Request) {
     );
   }
 
+  const ffmpegPath = resolveFFmpegExecutable();
+  let ffmpegAvailable = false;
+  let ffmpegVersion = 'unknown';
+
+  try {
+    const res = spawnSync(ffmpegPath, ['-version'], { windowsHide: true });
+    if (res.status === 0) {
+      ffmpegAvailable = true;
+      const stdout = res.stdout ? res.stdout.toString() : '';
+      const match = stdout.match(/ffmpeg version ([^\s]+)/i);
+      ffmpegVersion = match ? match[1] : 'installed';
+    }
+  } catch {}
+
   return NextResponse.json({
     success: true,
-    status: 'ONLINE',
+    status: ffmpegAvailable ? 'ONLINE' : 'UNHEALTHY',
     timestamp: new Date().toISOString(),
     workerSecretValid: true,
+    ffmpeg: {
+      available: ffmpegAvailable,
+      version: ffmpegVersion,
+    },
   });
 }

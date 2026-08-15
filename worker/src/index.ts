@@ -1,4 +1,5 @@
-import { workerConfig } from './config';
+import { spawnSync } from 'child_process';
+import { workerConfig, resolveFFmpegExecutable } from './config';
 import { jobQueue } from './queue/job-queue';
 import { mediaJobProcessor } from './processors/media-processor';
 import { storageProvider } from './storage/storage-provider';
@@ -8,11 +9,50 @@ import { Logger } from './utils/logger';
 class WorkerRunner {
   private isRunning = false;
   private activeJobsCount = 0;
+  private ffmpegAvailable = false;
+  private ffmpegVersion = 'unknown';
+  private resolvedFFmpegPath = '';
   private cleanupInterval?: NodeJS.Timeout;
   private heartbeatInterval?: NodeJS.Timeout;
 
+  private checkFFmpegAvailability() {
+    this.resolvedFFmpegPath = resolveFFmpegExecutable();
+    try {
+      const res = spawnSync(this.resolvedFFmpegPath, ['-version'], { windowsHide: true });
+      if (res.status === 0) {
+        this.ffmpegAvailable = true;
+        const stdout = res.stdout ? res.stdout.toString() : '';
+        const match = stdout.match(/ffmpeg version ([^\s]+)/i);
+        this.ffmpegVersion = match ? match[1] : 'installed';
+      } else {
+        this.ffmpegAvailable = false;
+      }
+    } catch {
+      this.ffmpegAvailable = false;
+    }
+
+    if (this.ffmpegAvailable) {
+      Logger.info(`WORKER_STARTED`, {
+        workerId: workerConfig.workerId,
+        FFMPEG_PATH: this.resolvedFFmpegPath,
+        FFMPEG_VERSION: this.ffmpegVersion,
+        FFMPEG_AVAILABLE: true,
+      });
+    } else {
+      Logger.error(`FFMPEG_NOT_FOUND`, {
+        workerId: workerConfig.workerId,
+        FFMPEG_PATH: this.resolvedFFmpegPath,
+        FFMPEG_AVAILABLE: false,
+        message: 'FFmpeg binary not accessible on worker host. Worker unhealthy for processing jobs.',
+      });
+    }
+  }
+
   public async start() {
     this.isRunning = true;
+
+    // Execute safe FFmpeg startup availability check & diagnostic logging
+    this.checkFFmpegAvailability();
 
     Logger.info(`y2matevideo.com Processing Worker Service Online`, {
       workerId: workerConfig.workerId,
@@ -20,6 +60,7 @@ class WorkerRunner {
       storageProvider: workerConfig.storageProvider,
       maxInputSizeMb: workerConfig.maxInputFileSizeMb,
       timeoutSeconds: workerConfig.processingTimeoutSeconds,
+      ffmpegAvailable: this.ffmpegAvailable,
     });
 
     // Send initial worker heartbeat
@@ -48,6 +89,18 @@ class WorkerRunner {
           const job = await jobQueue.claimJob(workerConfig.workerId);
 
           if (job) {
+            if (!this.ffmpegAvailable) {
+              Logger.error(`FFMPEG_UNAVAILABLE: Cannot process job ${job.id} because FFmpeg is missing on worker host.`);
+              await jobQueue.updateJob(job.id, {
+                status: 'FAILED',
+                stage: 'FAILED',
+                errorCode: 'FFMPEG_UNAVAILABLE',
+                errorMessage: 'Media processing engine is temporarily unavailable on worker host.',
+                failedAt: new Date().toISOString(),
+              });
+              continue;
+            }
+
             this.activeJobsCount++;
             // Execute job asynchronously within concurrency limit
             this.executeJob(job).finally(() => {

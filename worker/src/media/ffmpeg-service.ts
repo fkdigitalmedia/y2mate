@@ -86,6 +86,8 @@ export class FFmpegService {
         }
       }, timeoutMs);
 
+      Logger.info(`FFMPEG_SPAWN_START ffmpegPath=${execPath}`, { ffmpegPath: execPath, format: options.targetFormat.extension });
+
       try {
         // Safe spawn without shell wrapper
         child = spawn(execPath, args, {
@@ -94,6 +96,7 @@ export class FFmpegService {
         });
       } catch (err: any) {
         clearTimeout(timer);
+        Logger.error(`FFMPEG_SPAWN_FAILED ffmpegPath=${execPath} error=${err.message}`, { ffmpegPath: execPath, error: err.message });
         reject(new Error(`FFmpeg spawn exception: ${err.message}`));
         return;
       }
@@ -119,19 +122,23 @@ export class FFmpegService {
 
       child.on('error', (err) => {
         clearTimeout(timer);
+        Logger.error(`FFMPEG_SPAWN_FAILED error=${err.message}`);
         reject(new Error(`FFmpeg execution error: ${err.message}`));
       });
 
       child.on('close', (code) => {
         clearTimeout(timer);
         if (killedDueToTimeout) {
+          Logger.error(`FFMPEG_SPAWN_FAILED timeout`);
           reject(new Error('PROCESSING_TIMEOUT: FFmpeg processing exceeded time limit.'));
           return;
         }
 
         if (code === 0) {
+          Logger.info(`FFMPEG_SPAWN_SUCCESS ffmpegPath=${execPath}`);
           resolve();
         } else {
+          Logger.error(`FFMPEG_SPAWN_FAILED code=${code}`);
           // Check if output file was created anyway or if error fallback applies
           if (fs.existsSync(outputPath) && fs.statSync(outputPath).size > 0) {
             resolve();
