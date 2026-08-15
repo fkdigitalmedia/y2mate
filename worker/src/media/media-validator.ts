@@ -200,16 +200,25 @@ export class MediaValidatorService {
         return { isValid: false, fileSize: stat.size, error: 'Invalid MP4/M4A video container header (missing ISO ftyp atom).' };
       }
 
-      const fullHeader = Buffer.alloc(1024);
-      const fdFull = await fs.promises.open(filePath, 'r');
-      await fdFull.read(fullHeader, 0, 1024, 0);
-      await fdFull.close();
+      // Read first 64KB and last 64KB to locate moov & trak atoms
+      const scanSize = Math.min(stat.size, 64 * 1024);
+      const headScanBuf = Buffer.alloc(scanSize);
+      const tailScanBuf = Buffer.alloc(scanSize);
 
-      if (fullHeader.indexOf('moov') === -1) {
+      const fdScan = await fs.promises.open(filePath, 'r');
+      await fdScan.read(headScanBuf, 0, scanSize, 0);
+      const tailOffset = Math.max(0, stat.size - scanSize);
+      await fdScan.read(tailScanBuf, 0, scanSize, tailOffset);
+      await fdScan.close();
+
+      const hasMoov = headScanBuf.indexOf('moov') !== -1 || tailScanBuf.indexOf('moov') !== -1;
+      const hasTrak = headScanBuf.indexOf('trak') !== -1 || tailScanBuf.indexOf('trak') !== -1;
+
+      if (!hasMoov) {
         return { isValid: false, fileSize: stat.size, error: 'Invalid MP4 video container: missing ISO moov metadata index atom.' };
       }
 
-      if (fullHeader.indexOf('trak') === -1) {
+      if (!hasTrak) {
         return { isValid: false, fileSize: stat.size, error: 'MEDIA_OUTPUT_INVALID: MP4 container has zero track boxes (trak atom missing, nb_streams = 0).' };
       }
 
