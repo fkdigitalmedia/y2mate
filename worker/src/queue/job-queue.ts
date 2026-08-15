@@ -154,30 +154,41 @@ export class HybridJobQueue implements IJobQueue {
 
   async claimJob(workerId: string): Promise<DownloadJob | null> {
     const now = Date.now();
+    const nowIso = new Date().toISOString();
 
     // 1. Try claiming from Supabase DB first if configured
     if (this.supabaseUrl && this.supabaseKey) {
-      const queuedRows = await this.supabaseFetch('/jobs?status=eq.QUEUED&order=created_at.asc&limit=1');
-      if (Array.isArray(queuedRows) && queuedRows.length > 0) {
-        const dbJob = this.mapDbToJob(queuedRows[0]);
-        
-        const updateRows = await this.supabaseFetch(`/jobs?id=eq.${dbJob.id}`, {
-          method: 'PATCH',
-          body: JSON.stringify({
-            status: 'PROCESSING',
-            stage: 'DOWNLOADING',
-            progress: 10,
-            claimed_by: workerId,
-            started_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          }),
-        });
+      const queuedRows = await this.supabaseFetch(
+        `/jobs?status=eq.QUEUED&expires_at=gt.${nowIso}&order=created_at.desc&limit=5`
+      );
 
-        if (Array.isArray(updateRows) && updateRows.length > 0) {
-          const claimed = this.mapDbToJob(updateRows[0]);
-          this.jobs.set(claimed.id, claimed);
-          Logger.info(`Worker ${workerId} claimed DB job ${claimed.id}`, { jobId: claimed.id, stage: 'DOWNLOADING' });
-          return claimed;
+      if (Array.isArray(queuedRows) && queuedRows.length > 0) {
+        for (const row of queuedRows) {
+          try {
+            const dbJob = this.mapDbToJob(row);
+            if (!dbJob || !dbJob.id) continue;
+
+            const updateRows = await this.supabaseFetch(`/jobs?id=eq.${dbJob.id}&status=eq.QUEUED`, {
+              method: 'PATCH',
+              body: JSON.stringify({
+                status: 'PROCESSING',
+                stage: 'DOWNLOADING',
+                progress: 10,
+                claimed_by: workerId,
+                started_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+              }),
+            });
+
+            if (Array.isArray(updateRows) && updateRows.length > 0) {
+              const claimed = this.mapDbToJob(updateRows[0]);
+              this.jobs.set(claimed.id, claimed);
+              Logger.info(`Worker ${workerId} claimed DB job ${claimed.id}`, { jobId: claimed.id, stage: 'DOWNLOADING' });
+              return claimed;
+            }
+          } catch (claimErr: any) {
+            Logger.warn(`Error processing claim candidate: ${claimErr.message}`);
+          }
         }
       }
     }
@@ -266,11 +277,11 @@ export class HybridJobQueue implements IJobQueue {
   async getJob(jobId: string): Promise<DownloadJob | null> {
     Logger.info(`JOB_STATUS_REQUEST id=${jobId}`);
 
-    // 1. Check local in-memory Map FIRST
     let job = this.jobs.get(jobId);
 
-    // 2. If not found in memory AND Supabase is configured, check Supabase DB
-    if (!job && this.supabaseUrl && this.supabaseKey) {
+    // If Supabase is configured AND (job is not in local memory OR job is still in non-final state),
+    // sync latest live status directly from Supabase DB to reflect worker execution
+    if (this.supabaseUrl && this.supabaseKey && (!job || job.status === 'QUEUED' || job.status === 'PROCESSING')) {
       const rows = await this.supabaseFetch(`/jobs?id=eq.${jobId}`);
       if (Array.isArray(rows) && rows.length > 0) {
         job = this.mapDbToJob(rows[0]);
