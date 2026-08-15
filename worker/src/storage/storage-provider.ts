@@ -173,16 +173,26 @@ export class LocalDiskStorageProvider implements StorageProvider {
   }
 }
 
-// Select storage provider based on environment configuration
+// Select storage provider dynamically based on current environment configuration
 export function getStorageProvider(): StorageProvider {
   if (
-    (workerConfig.storageProvider === 'r2' || workerConfig.storageProvider === 's3') &&
+    (process.env.STORAGE_PROVIDER === 'r2' || process.env.STORAGE_PROVIDER === 's3') &&
     workerConfig.storageAccessKey &&
-    workerConfig.storageSecretKey
+    workerConfig.storageSecretKey &&
+    !workerConfig.storageAccessKey.includes('your-')
   ) {
     return new S3StorageProvider();
   }
   return LocalDiskStorageProvider.getInstance();
 }
 
-export const storageProvider = getStorageProvider();
+export const storageProvider: StorageProvider = {
+  uploadFile: (key: string, sourcePath: string, mimeType: string) =>
+    getStorageProvider().uploadFile(key, sourcePath, mimeType),
+  createSignedUrl: (key: string, expiresInSeconds?: number) =>
+    getStorageProvider().createSignedUrl(key, expiresInSeconds),
+  deleteFile: (key: string) =>
+    getStorageProvider().deleteFile(key),
+  getMetadata: (key: string) =>
+    getStorageProvider().getMetadata(key),
+};
