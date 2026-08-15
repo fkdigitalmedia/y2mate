@@ -70,6 +70,7 @@ export class DefaultMediaSourceProvider implements MediaSourceProvider {
         '--no-playlist',
         '--no-check-certificates',
         '--prefer-free-formats',
+        '--extractor-args', 'youtube:player_client=android,ios',
       ];
 
       if (isAudio) {
