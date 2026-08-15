@@ -33,43 +33,79 @@ export function formatMediaFileSize(
 }
 
 /**
- * Generates URL-specific, dynamic MediaResult with URL-calculated durations, formats, and estimated sizes.
- * Completely eliminates static hardcoded values (e.g. ~54.2 MB / ~28.4 MB).
+ * Fetches real oEmbed metadata (Title, Thumbnail, Author) for YouTube and Vimeo URLs.
  */
-export function buildDynamicMediaResult(
+async function fetchOEmbedMetadata(url: string, platformId: string): Promise<{ title?: string; thumbnail?: string; uploader?: string }> {
+  try {
+    if (platformId === 'youtube' || url.includes('youtube.com') || url.includes('youtu.be')) {
+      const videoIdMatch = url.match(/(?:v=|\/embed\/|\/watch\?v=|youtu\.be\/|\/shorts\/)([a-zA-Z0-9_-]{11})/);
+      const videoId = videoIdMatch ? videoIdMatch[1] : null;
+
+      const oembedRes = await fetch(`https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`, {
+        signal: AbortSignal.timeout(4000),
+      });
+
+      if (oembedRes.ok) {
+        const data = await oembedRes.json();
+        return {
+          title: data.title,
+          thumbnail: data.thumbnail_url || (videoId ? `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg` : undefined),
+          uploader: data.author_name,
+        };
+      } else if (videoId) {
+        return {
+          thumbnail: `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`,
+        };
+      }
+    }
+
+    if (platformId === 'vimeo' || url.includes('vimeo.com')) {
+      const oembedRes = await fetch(`https://vimeo.com/api/oembed.json?url=${encodeURIComponent(url)}`, {
+        signal: AbortSignal.timeout(4000),
+      });
+      if (oembedRes.ok) {
+        const data = await oembedRes.json();
+        return {
+          title: data.title,
+          thumbnail: data.thumbnail_url,
+          uploader: data.author_name,
+        };
+      }
+    }
+  } catch (err) {
+    // Graceful fallback on network timeout
+  }
+
+  return {};
+}
+
+/**
+ * Generates URL-specific, dynamic MediaResult with URL-calculated durations, formats, and estimated sizes.
+ * Integrates real oEmbed metadata (Title, Thumbnail, Uploader) for YouTube and Vimeo.
+ */
+export async function buildDynamicMediaResult(
   url: string,
   sanitizedUrl: string,
   platformName: string,
   platformId: string
-): MediaResult {
+): Promise<MediaResult> {
   const hash = hashString(sanitizedUrl);
   
   // Extract identifier or slug
   const videoIdMatch = sanitizedUrl.match(/(?:v=|\/embed\/|\/watch\?v=|youtu\.be\/|\/video\/|\/p\/|\/shorts\/)([a-zA-Z0-9_-]{8,15})/);
   const videoId = videoIdMatch ? videoIdMatch[1] : `vid_${hash.toString(36).substring(0, 8)}`;
 
+  // Fetch real oEmbed metadata
+  const oembed = await fetchOEmbedMetadata(sanitizedUrl, platformId);
+
   // Dynamic URL-specific duration (range 45 seconds to 780 seconds / 13 mins)
   const durationSec = 45 + (hash % 735);
 
-  // Dynamic titles per platform & URL
-  const titleTopics = [
-    'Official Music Video & Audio Stream',
-    'Full HD Cinematic Travel Vlog',
-    'Tech Review & Comprehensive Unboxing',
-    'Highlights & Best Moments Showcase',
-    'Complete Documentary Feature',
-  ];
-  const selectedTopic = titleTopics[hash % titleTopics.length];
-  const title = `${platformName} ${selectedTopic} [${videoId}]`;
+  const title = oembed.title || `${platformName} Video (${videoId})`;
+  const thumbnail = oembed.thumbnail || (videoIdMatch && platformId === 'youtube' ? `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg` : `https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80`);
+  const uploader = oembed.uploader || `${platformName} Content Creator`;
 
   // Bitrates in bps for format size calculation
-  // 1080p: 4,500,000 video + 128,000 audio = 4,628,000 bps
-  // 720p:  2,200,000 video + 128,000 audio = 2,328,000 bps
-  // 480p:  1,000,000 video + 128,000 audio = 1,128,000 bps
-  // 360p:    600,000 video + 128,000 audio =   728,000 bps
-  // 320k MP3: 320,000 bps audio
-  // 128k MP3: 128,000 bps audio
-
   const calcBytes = (bitrateBps: number) => Math.floor((bitrateBps * durationSec) / 8);
 
   const f1080 = formatMediaFileSize(calcBytes(4628000), true);
@@ -163,9 +199,9 @@ export function buildDynamicMediaResult(
     platform: platformName,
     platformId,
     title,
-    thumbnail: `https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80`,
+    thumbnail,
     duration: durationSec,
-    uploader: `${platformName} Content Creator`,
+    uploader,
     channelUrl: sanitizedUrl,
     analyzedAt: new Date().toISOString(),
     formats,
