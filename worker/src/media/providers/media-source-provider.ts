@@ -73,6 +73,21 @@ export class DefaultMediaSourceProvider implements MediaSourceProvider {
         '--extractor-args', 'youtube:player_client=android,ios',
       ];
 
+      // Automatically include cookies.txt if present for authenticated / bot-protected stream bypass
+      const possibleCookiePaths = [
+        process.env.COOKIES_PATH,
+        path.join(process.cwd(), 'cookies.txt'),
+        path.join(process.cwd(), 'cookies.json'),
+        '/home/opc/y2mate/cookies.txt',
+      ];
+      for (const cp of possibleCookiePaths) {
+        if (cp && fs.existsSync(cp)) {
+          args.push('--cookies', cp);
+          Logger.info(`Using yt-dlp cookies from ${cp}`);
+          break;
+        }
+      }
+
       if (isAudio) {
         args.push('-x', '--audio-format', 'mp3', '-o', targetFilePath, streamUrl);
       } else {
