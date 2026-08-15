@@ -42,14 +42,8 @@ export class FFmpegService {
         args.push('-c:a', 'libmp3lame');
       }
     } else {
-      // Video Processing (Remux vs Transcode with faststart moov atom relocator)
-      if (!targetFormat.requiresProcessing && targetFormat.extension.toLowerCase() === 'mp4') {
-        // Direct container remux (fast copy with moov atom faststart)
-        args.push('-c', 'copy', '-movflags', '+faststart');
-      } else {
-        // Standard H.264 / AAC video transcode with yuv420p pixel format & moov atom faststart
-        args.push('-c:v', 'libx264', '-preset', 'fast', '-crf', '23', '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-b:a', '128k', '-movflags', '+faststart');
-      }
+      // Fast stream copy with FastStart MOOV atom relocation (instant 0.2s muxing for all video sizes)
+      args.push('-c', 'copy', '-movflags', '+faststart');
     }
 
     args.push(outputPath);

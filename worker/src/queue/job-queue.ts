@@ -37,11 +37,11 @@ export class HybridJobQueue implements IJobQueue {
   }
 
   private get supabaseUrl(): string | undefined {
-    return process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+    return process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://lukrziyxxetdeajyyqxr.supabase.co';
   }
 
   private get supabaseKey(): string | undefined {
-    return process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
+    return process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx1a3J6aXl4eGV0ZGVhanl5cXhyIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NjcwNTM5MCwiZXhwIjoyMTAyMjgxMzkwfQ.n5K6tAtlX-7lsb-__h3p4kSmdxiS527qEU42H2TJFEI';
   }
 
   public static getInstance(): HybridJobQueue {

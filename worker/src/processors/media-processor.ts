@@ -73,8 +73,8 @@ export class MediaJobProcessor {
       // Step 3: Stage 2 - PROCESSING (40% - 80%)
       if (onStageUpdate) await onStageUpdate('PROCESSING', 45);
 
-      if (format.requiresProcessing || format.type === 'audio') {
-        Logger.info(`Executing FFmpeg conversion/audio extraction for job`, { jobId, format: format.extension });
+      if (format.type === 'audio') {
+        Logger.info(`Executing FFmpeg audio extraction for job`, { jobId, format: format.extension });
 
         await ffmpegService.convert({
           inputPath: inputFilePath,
@@ -83,12 +83,12 @@ export class MediaJobProcessor {
           durationSeconds: 180,
           timeoutSeconds: workerConfig.processingTimeoutSeconds,
           onProgress: (progressPct) => {
-            const overallPct = 45 + Math.round((progressPct / 100) * 35); // Maps 0-100% FFmpeg to 45-80% overall
+            const overallPct = 45 + Math.round((progressPct / 100) * 35);
             if (onStageUpdate) onStageUpdate('PROCESSING', overallPct);
           },
         });
       } else {
-        // Enforce container faststart MOOV atom via FFmpeg remuxing
+        // Enforce container faststart MOOV atom via FFmpeg remuxing (fast copy)
         try {
           await ffmpegService.convert({
             inputPath: inputFilePath,
